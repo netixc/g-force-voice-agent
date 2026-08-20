@@ -1,0 +1,47 @@
+[project]
+name = "g-force-voice-agent"
+version = "0.1.0"
+description = "GPU-accelerated flight-booking voice agent with OpenRouter, Faster Whisper, and Kokoro"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pipecat-ai[nvidia,silero,runner,webrtc,websocket,openai,whisper,kokoro]==1.5.0",
+    "nvidia-cublas-cu12>=12.6.4.1; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "nvidia-cudnn-cu12>=9.5.1.17; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "onnxruntime-gpu[cuda,cudnn]==1.24.4; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "python-dotenv>=1.2.2",
+    "loguru>=0.7.3",
+    "pyyaml>=6.0.3",
+    "opentelemetry-exporter-otlp-proto-http>=1.40.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.40.0",
+]
+
+[tool.uv]
+override-dependencies = [
+    "cryptography>=46.0.5",
+    "idna>=3.15",
+    "starlette>=1.0.1",
+    "protobuf>=6.33.6",
+    "uuid-utils>=0.16.0",
+    "pillow>=12.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+    "pre-commit>=4.0.0",
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I", "D"]
+ignore = ["SIM108", "E402"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

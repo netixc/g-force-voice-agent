@@ -1,0 +1,15 @@
+.git
+.github
+.env
+.venv
+.ruff_cache
+.pytest_cache
+**/__pycache__
+**/*.pyc
+client/node_modules
+client/dist
+tests
+docs
+data
+*.db
+*.log

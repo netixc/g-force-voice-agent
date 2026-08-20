@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause
+
+selection: frontend-backend-agent
+transports: all
+
+examples:
+  frontend-backend-agent:
+    label: G Force Voice Agent
+    welcome_message: false
+    slots: [llm, thinker-llm, booking-server, asr, tts]
+    defaults:
+      prompt: [talker]
+      llm: [nemotron-nano]
+      thinker-llm: [nemotron-nano]
+      booking-server: [default]
+      asr: [nemotron-asr-streaming-english]
+      tts: [magpie-multilingual-tts]
+    bot: examples.frontend_backend_agent.pipeline:bot
