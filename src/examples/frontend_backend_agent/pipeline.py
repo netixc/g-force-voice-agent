@@ -85,7 +85,7 @@ def _llm_connection_kwargs(base_url: str) -> dict:
 
     headers: dict[str, str] = {}
     http_referer = os.getenv("OPENROUTER_HTTP_REFERER", "").strip()
-    app_name = os.getenv("OPENROUTER_APP_NAME", "Nemotron Voice Agent").strip()
+    app_name = os.getenv("OPENROUTER_APP_NAME", "G Force Voice Agent").strip()
     if http_referer:
         headers["HTTP-Referer"] = http_referer
     if app_name:
