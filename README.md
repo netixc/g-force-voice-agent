@@ -70,9 +70,9 @@ Do not use `docker compose down -v` unless you intend to delete project-owned mo
 
 ## Existing Deployment Data
 
-The local `.env` created with this project points to the existing model-cache and booking-data volumes. This avoids downloading Faster Whisper and Kokoro again and preserves the current booking database.
+The local, Git-ignored `docker-compose.override.yml` points to the original deployment's model-cache and booking-data volumes. This avoids downloading Faster Whisper and Kokoro again and preserves the current booking database.
 
-For a fully independent deployment, use these values instead:
+Delete that local override to use independent volumes. The standalone Compose defaults are:
 
 ```dotenv
 MODEL_CACHE_VOLUME=g-force-voice-agent_model_cache

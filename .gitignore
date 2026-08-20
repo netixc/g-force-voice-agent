@@ -6,6 +6,7 @@ __pycache__/
 .vscode/
 .env
 .env.jetson
+docker-compose.override.yml
 *.wav
 venv/
 .venv/
