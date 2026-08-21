@@ -97,7 +97,7 @@ Select the `talker` prompt in the browser when using this mode. The `booking-ser
 
 ## Speech
 
-The one-shot `model-init` service downloads and verifies Faster Whisper and Kokoro before `voice-agent` starts. Artifacts are stored in `MODEL_CACHE_VOLUME`, so image rebuilds and container recreation do not download them again. To follow first-start progress:
+The one-shot `model-init` service downloads Faster Whisper and Kokoro before `voice-agent` starts, loads Faster Whisper with the configured CUDA device, and parses Kokoro with `CUDAExecutionProvider`. Artifacts are stored in `MODEL_CACHE_VOLUME`, so image rebuilds and container recreation do not download them again. A missing, partial, or corrupt artifact is downloaded again atomically. To follow first-start progress:
 
 ```bash
 docker compose logs -f model-init

@@ -40,7 +40,7 @@ Create the sandboxed workspace. The default Pi configuration can read it but can
 mkdir -p workspace
 ```
 
-Build and run. On the first start, `model-init` downloads Faster Whisper and Kokoro into the persistent model cache before the voice server starts:
+Build and run. On the first start, `model-init` downloads Faster Whisper and Kokoro into the persistent model cache and validates both with GPU providers before the voice server starts:
 
 ```bash
 docker compose up -d --build

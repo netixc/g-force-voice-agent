@@ -18,12 +18,22 @@ services:
     command: ["uv", "run", "python", "src/prefetch_models.py"]
     environment:
       FASTER_WHISPER_MODEL: ${FASTER_WHISPER_MODEL:-deepdml/faster-whisper-large-v3-turbo-ct2}
+      FASTER_WHISPER_DEVICE: ${FASTER_WHISPER_DEVICE:-cuda}
+      FASTER_WHISPER_COMPUTE_TYPE: ${FASTER_WHISPER_COMPUTE_TYPE:-float16}
       HF_DOWNLOAD_WORKERS: ${HF_DOWNLOAD_WORKERS:-1}
       HF_HUB_DISABLE_XET: ${HF_HUB_DISABLE_XET:-true}
       HF_TOKEN: ${HF_TOKEN:-}
+      ONNX_PROVIDER: ${ONNX_PROVIDER:-CUDAExecutionProvider}
     volumes:
       - ./src:/app/src:ro
       - model-cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
     restart: "no"
     logging: *default-logging
 
