@@ -1,5 +1,7 @@
 import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
 import process from "node:process";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 import { Type } from "typebox";
 import {
@@ -36,7 +38,12 @@ if (!model) {
 }
 
 const sessions = new Map();
+const requestContext = new AsyncLocalStorage();
 let activeWorkers = 0;
+
+function audit(event, fields = {}) {
+  console.log(JSON.stringify({ timestamp: new Date().toISOString(), component: "pi-agent", event, ...fields }));
+}
 
 function chiefPrompt() {
   return `You are the user's private chief of staff and primary assistant.
@@ -90,7 +97,9 @@ const delegateTask = defineTool({
     instructions: Type.String({ description: "Self-contained task with relevant constraints and expected output." }),
   }),
   execute: async (_toolCallId, params) => {
+    const context = requestContext.getStore() || {};
     if (activeWorkers >= maxWorkers) {
+      audit("worker_rejected", { ...context, reason: "worker_limit", activeWorkers, maxWorkers });
       return {
         content: [{ type: "text", text: `Worker limit reached (${maxWorkers}); complete the task directly or retry later.` }],
         details: { rejected: true },
@@ -98,15 +107,31 @@ const delegateTask = defineTool({
       };
     }
     activeWorkers += 1;
+    const startedAt = Date.now();
     let worker;
+    audit("worker_started", { ...context, role: String(params.role).slice(0, 80), activeWorkers });
     try {
       ({ session: worker } = await createSession(workerPrompt(params.role)));
       await worker.prompt(params.instructions);
       const text = lastAssistantText(worker.messages);
+      audit("worker_completed", {
+        ...context,
+        role: String(params.role).slice(0, 80),
+        durationMs: Date.now() - startedAt,
+        responseChars: text.length,
+      });
       return {
         content: [{ type: "text", text: text || "The worker completed without a textual result." }],
         details: { role: params.role },
       };
+    } catch (error) {
+      audit("worker_failed", {
+        ...context,
+        role: String(params.role).slice(0, 80),
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : "unknown error",
+      });
+      throw error;
     } finally {
       worker?.dispose();
       activeWorkers -= 1;
@@ -118,8 +143,9 @@ async function getOrCreateSession(sessionId) {
   let record = sessions.get(sessionId);
   if (record) return record;
   const { session } = await createSession(chiefPrompt(), [delegateTask]);
-  record = { session, busy: false, touchedAt: Date.now() };
+  record = { session, busy: false, touchedAt: Date.now(), activeRequestId: null };
   sessions.set(sessionId, record);
+  audit("session_created", { sessionKey: sessionId.slice(0, 12), sessionId: session.sessionId });
   return record;
 }
 
@@ -140,18 +166,49 @@ const server = createServer(async (request, response) => {
       const body = await readJson(request);
       const message = typeof body.message === "string" ? body.message.trim() : "";
       if (!message) return sendJson(response, 400, { error: "message is required" });
+      const requestId = validRequestId(body.request_id) ? body.request_id : randomUUID();
+      const sessionKey = messageMatch[1].slice(0, 12);
+      const startedAt = Date.now();
+      audit("request_received", {
+        requestId,
+        sessionKey,
+        provider,
+        model: modelId,
+        messageChars: message.length,
+      });
       const record = await getOrCreateSession(messageMatch[1]);
-      if (record.busy) return sendJson(response, 409, { error: "session is already processing a request" });
+      if (record.busy) {
+        audit("request_rejected", { requestId, sessionKey, reason: "session_busy" });
+        return sendJson(response, 409, { error: "session is already processing a request", requestId });
+      }
       record.busy = true;
+      record.activeRequestId = requestId;
       record.touchedAt = Date.now();
       try {
-        await record.session.prompt(message);
-        return sendJson(response, 200, {
-          response: lastAssistantText(record.session.messages),
-          sessionId: record.session.sessionId,
+        await requestContext.run({ requestId, sessionKey }, () => record.session.prompt(message));
+        const responseText = lastAssistantText(record.session.messages);
+        audit("request_completed", {
+          requestId,
+          sessionKey,
+          durationMs: Date.now() - startedAt,
+          responseChars: responseText.length,
         });
+        return sendJson(response, 200, {
+          response: responseText,
+          sessionId: record.session.sessionId,
+          requestId,
+        });
+      } catch (error) {
+        audit("request_failed", {
+          requestId,
+          sessionKey,
+          durationMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : "unknown error",
+        });
+        throw error;
       } finally {
         record.busy = false;
+        record.activeRequestId = null;
         record.touchedAt = Date.now();
       }
     }
@@ -159,8 +216,16 @@ const server = createServer(async (request, response) => {
     const abortMatch = url.pathname.match(/^\/sessions\/([a-zA-Z0-9_-]+)\/abort$/);
     if (request.method === "POST" && abortMatch) {
       const record = sessions.get(abortMatch[1]);
-      if (record?.busy) await record.session.abort();
-      return sendJson(response, 200, { aborted: Boolean(record?.busy) });
+      const wasBusy = Boolean(record?.busy);
+      const requestId = record?.activeRequestId || null;
+      if (wasBusy) {
+        audit("request_aborted", {
+          requestId,
+          sessionKey: abortMatch[1].slice(0, 12),
+        });
+        await record.session.abort();
+      }
+      return sendJson(response, 200, { aborted: wasBusy, requestId });
     }
 
     if (request.method === "DELETE" && abortMatch) {
@@ -181,7 +246,7 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, "0.0.0.0", () => {
-  console.log(`Pi chief-of-staff service listening on 0.0.0.0:${port}`);
+  audit("service_started", { port, provider, model: modelId, tools: builtinTools, maxWorkers });
 });
 
 async function shutdown() {
@@ -219,6 +284,10 @@ function parseTools(value) {
     if (!allowed.has(tool)) throw new Error(`Unsupported PI_TOOLS entry: ${tool}`);
   }
   return [...new Set(tools)];
+}
+
+function validRequestId(value) {
+  return typeof value === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(value);
 }
 
 function parsePositiveInt(value, fallback) {

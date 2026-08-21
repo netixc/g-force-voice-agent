@@ -8,11 +8,15 @@ Check the voice gateway and Pi service logs:
 docker compose logs --tail 200 voice-agent pi-agent
 ```
 
-Confirm the Pi service is healthy:
+Confirm the Pi service is healthy and correlate requests across both services:
 
 ```bash
 docker compose ps pi-agent
+docker compose logs --tail 200 voice-agent pi-agent | grep -E \
+  'Pi request (started|completed)|"event":"request_(received|completed|failed|aborted)"'
 ```
+
+A successful request has the same `request_id` in the voice gateway's start/completion lines and Pi's structured received/completed events. Audit events intentionally omit request and response content.
 
 If OpenRouter reports that the model is only available through the Batch API, remove `:batch` from the model ID in `services.local.yaml`.
 

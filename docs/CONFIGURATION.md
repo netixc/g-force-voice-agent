@@ -41,6 +41,8 @@ The `pi-agent` service creates one in-memory chief `AgentSession` for each voice
 
 The service mounts only `./workspace` at `/workspace`. The container runs as the non-root `node` user, drops Linux capabilities, uses a read-only root filesystem, and does not receive the Docker socket.
 
+Each request has a correlation ID. `voice-agent` logs Pi request start and completion, while `pi-agent` emits structured `request_received`, `request_completed`, `request_failed`, and `request_aborted` audit events with the same ID. Delegated workers emit corresponding worker events. Audit records include timing and character counts but not user messages, model responses, prompts, or credentials.
+
 The default tools are read-only:
 
 ```dotenv

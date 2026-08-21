@@ -68,12 +68,17 @@ docker compose down
 - The chief can call `delegate_task` to run bounded work in an ephemeral Pi worker.
 - The chief's final response returns through Kokoro TTS and the browser transcript.
 
-Verify the active GPU speech path in the logs:
+Verify the active GPU speech path and Pi request audit trail in the logs:
 
 ```bash
 docker compose logs --tail 200 voice-agent | grep -E \
   'Loaded Whisper model|device=cuda|execution_provider=CUDAExecutionProvider|Client connected'
+
+docker compose logs --tail 200 voice-agent pi-agent | grep -E \
+  'Pi request (started|completed)|"event":"request_(received|completed)"'
 ```
+
+The same `request_id` appears in both services, proving that the voice gateway sent the request to Pi and received its completion.
 
 ## Pi Permissions
 

@@ -14,6 +14,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from loguru import logger
+
 from examples.frontend_backend_agent.src.protocol import AgentLifecycleEvent, response_hint
 
 
@@ -41,26 +43,33 @@ class PiAgentBackend:
         event = AgentLifecycleEvent(marker="AgentStarted", call_id=call_id, query=clean_query)
         if on_started:
             await on_started(event)
+        logger.info(f"Pi request started: request_id={call_id}, session_key={self._session_id[:12]}")
 
         task = asyncio.create_task(
             asyncio.to_thread(
                 self._request,
                 "POST",
                 f"/sessions/{self._session_id}/messages",
-                {"message": clean_query},
+                {"message": clean_query, "request_id": call_id},
             )
         )
         self._active_task = task
         try:
             result = await task
         except asyncio.CancelledError:
-            await self._abort_remote()
+            await self._abort_remote(call_id)
+            logger.info(f"Pi request aborted: request_id={call_id}, session_key={self._session_id[:12]}")
             raise
         finally:
             if self._active_task is task:
                 self._active_task = None
 
         response_text = str(result.get("response") or "").strip()
+        returned_request_id = str(result.get("requestId") or call_id)
+        logger.info(
+            f"Pi request completed: request_id={returned_request_id}, session_key={self._session_id[:12]}, "
+            f"response_chars={len(response_text)}"
+        )
         if not response_text:
             return response_hint(
                 reason="empty_agent_response",
@@ -84,7 +93,7 @@ class PiAgentBackend:
         task.cancel()
         return True
 
-    async def _abort_remote(self) -> None:
+    async def _abort_remote(self, request_id: str) -> None:
         # Cancellation must not be replaced by an abort transport failure.
         with suppress(Exception):
             await asyncio.shield(
@@ -92,7 +101,7 @@ class PiAgentBackend:
                     self._request,
                     "POST",
                     f"/sessions/{self._session_id}/abort",
-                    {},
+                    {"request_id": request_id},
                 )
             )
 

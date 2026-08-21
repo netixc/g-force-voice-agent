@@ -25,7 +25,9 @@ class PiAgentBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["context"], "chief_of_staff")
         self.assertEqual(events[0].marker, "AgentStarted")
         self.assertIn("/sessions/", request.call_args.args[1])
-        self.assertEqual(request.call_args.args[2], {"message": "Review my priorities"})
+        request_payload = request.call_args.args[2]
+        self.assertEqual(request_payload["message"], "Review my priorities")
+        self.assertEqual(request_payload["request_id"], events[0].call_id)
 
     async def test_empty_agent_response_has_retry_message(self):
         backend = PiAgentBackend("http://pi-agent:8787")
@@ -59,7 +61,9 @@ class PiAgentBackendTests(unittest.IsolatedAsyncioTestCase):
             release_request.set()
             await asyncio.sleep(0.05)
 
-        self.assertTrue(any(path.endswith("/abort") for _, path, _ in requests))
+        message_request = next(item for item in requests if item[1].endswith("/messages"))
+        abort_request = next(item for item in requests if item[1].endswith("/abort"))
+        self.assertEqual(abort_request[2]["request_id"], message_request[2]["request_id"])
 
 
 if __name__ == "__main__":
