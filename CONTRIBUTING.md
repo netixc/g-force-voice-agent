@@ -23,11 +23,15 @@ For live deployment, authenticate host Pi with ChatGPT Plus/Pro (Codex), then ru
 ## Validation
 
 ```bash
-uv run ruff check .
-uv run ruff format --check .
+uvx ruff@0.15.6 check .
+uvx ruff@0.15.6 format --check .
+uv sync --dev
 uv run pytest tests/ -v
+npm --prefix client ci
 npm --prefix client run lint
 npm --prefix client run build
+npm --prefix pi-agent-service ci --ignore-scripts
+npm --prefix pi-agent-service run check
 docker compose config
 ```
 

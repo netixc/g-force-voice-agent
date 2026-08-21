@@ -8,12 +8,14 @@ The deployment reads `.env` through Docker Compose.
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | Required | Authenticates the voice Talker only. |
 | `OPENROUTER_APP_NAME` | `G Force Voice Agent` | OpenRouter attribution title. |
+| `OPENROUTER_HTTP_REFERER` | Empty | Optional OpenRouter attribution URL. |
 | `CHIEF_PI_PROVIDER` | `openai-codex` | Pi subscription provider. |
 | `CHIEF_PI_MODEL` | `gpt-5.6-sol` | Pi chief and worker model. |
 | `CHIEF_PI_THINKING_LEVEL` | `low` | Pi reasoning level. |
 | `CHIEF_PI_TOOLS` | `read,grep,find,ls` | Tools enabled for chief and worker sessions. |
 | `CHIEF_PI_MAX_WORKERS` | `2` | Maximum concurrent delegated Pi workers. |
 | `PI_AGENT_TIMEOUT_SECONDS` | `300` | Voice gateway timeout for a chief request. |
+| `PI_AGENT_URL` | `http://pi-agent:8787` | Pi endpoint used by the voice gateway. |
 | `AGENT_FILLER_THRESHOLD_SECONDS` | `0.3` | Delay before optional neutral progress speech. |
 | `PI_AGENT_DATA_VOLUME` | `g-force-voice-agent_pi_agent_data` | Pi OAuth credentials, catalog, and agent runtime state. |
 | `PI_AUTH_FILE` | `/root/.pi/agent/auth.json` | Host Pi credential file read only by the setup profile. |
@@ -28,6 +30,13 @@ The deployment reads `.env` through Docker Compose.
 | `HF_TOKEN` | Empty | Optional Hugging Face token for higher download rate limits. |
 | `ONNX_PROVIDER` | `CUDAExecutionProvider` | Kokoro ONNX execution provider. |
 | `CHAT_HISTORY_RECENT_TURNS` | `20` | Number of recent messages retained in Talker context. |
+| `PIPELINE_IDLE_TIMEOUT_SECS` | `600` | Disconnect timeout; values below `300` are rejected. |
+| `AUDIO_OUT_10MS_CHUNKS` | `10` in `.env.example` | Number of 10 ms output-audio chunks buffered by the transport. |
+| `ENABLE_ASR_AUDIO_DUMP` | `false` | Writes per-turn microphone WAV files when enabled. |
+| `ENABLE_TTS_AUDIO_DUMP` | `false` | Writes per-turn synthesized WAV files when enabled. |
+| `ENABLE_TRACING` | `false` | Enables OpenTelemetry tracing. |
+| `OTEL_CONSOLE_EXPORT` | `false` | Mirrors enabled traces to the service log. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `localhost:4317` | OTLP collector endpoint used when tracing is enabled. |
 | `MODEL_CACHE_VOLUME` | `g-force-voice-agent_model_cache` | Docker volume for downloaded speech models and package caches. |
 
 Recreate services after changing `.env`:

@@ -121,6 +121,16 @@ Pi runs as a non-root user, receives only `./workspace`, and does not receive th
 
 Refer to [Configuration](docs/CONFIGURATION.md), [Troubleshooting](docs/TROUBLESHOOTING.md), and [Contributing](CONTRIBUTING.md).
 
+## Upstream and Legacy Archive
+
+This Pi-only branch derives from NVIDIA's [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent). The retired airline and booking demonstration is preserved outside the active tree at tag [`airline-demo-final`](https://github.com/netixc/g-force-voice-agent/tree/airline-demo-final) and branch [`archive/airline-demo`](https://github.com/netixc/g-force-voice-agent/tree/archive/airline-demo), both rooted at commit [`e922735b4d74018946619f8463dedbd6f219860e`](https://github.com/netixc/g-force-voice-agent/commit/e922735b4d74018946619f8463dedbd6f219860e). Do not restore that functionality to active branches without an explicit scope change.
+
+Inspect the archive without changing this checkout:
+
+```bash
+git ls-tree -r airline-demo-final -- src/examples/frontend_backend_agent/airline/
+```
+
 ## Prototype Status
 
 This is a working prototype intended for personal development and further security work. Before exposing it to other users, add authentication, trusted TLS, per-user workspace isolation, approval controls, monitoring, and explicit retention policies.
