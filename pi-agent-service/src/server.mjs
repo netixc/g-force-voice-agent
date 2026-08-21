@@ -16,16 +16,12 @@ import {
 const port = parsePositiveInt(process.env.PORT, 8787);
 const workspace = process.env.PI_WORKSPACE || "/workspace";
 const agentDir = process.env.PI_AGENT_DIR || "/agent-data";
-const modelId = process.env.PI_MODEL || "google/gemini-3.7-flash";
-const provider = process.env.PI_PROVIDER || "openrouter";
+const modelId = process.env.PI_MODEL || "gpt-5.6-sol";
+const provider = process.env.PI_PROVIDER || "openai-codex";
 const thinkingLevel = process.env.PI_THINKING_LEVEL || "low";
 const builtinTools = parseTools(process.env.PI_TOOLS || "read,grep,find,ls");
 const maxBodyBytes = parsePositiveInt(process.env.PI_MAX_BODY_BYTES, 1024 * 1024);
 const maxWorkers = parsePositiveInt(process.env.PI_MAX_WORKERS, 2);
-
-if (!process.env.OPENROUTER_API_KEY) {
-  throw new Error("OPENROUTER_API_KEY is required");
-}
 
 const modelRuntime = await ModelRuntime.create({
   authPath: `${agentDir}/auth.json`,

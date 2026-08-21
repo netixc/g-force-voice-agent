@@ -6,8 +6,8 @@ Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-A
 
 ## Stack
 
-- OpenRouter `google/gemini-3.7-flash` for the voice Talker and Pi agents
-- Pi SDK chief-of-staff session with delegated worker sessions
+- OpenRouter `google/gemini-3.7-flash` for the voice Talker
+- Pi SDK chief and worker sessions using Codex-plan `openai-codex/gpt-5.6-sol`
 - Faster Whisper Large V3 Turbo on an NVIDIA GPU
 - Kokoro ONNX TTS with CUDA Execution Provider
 - Pipecat with WebRTC and WebSocket transports
@@ -18,7 +18,8 @@ Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-A
 
 - Linux x86-64 with an NVIDIA CUDA GPU
 - Docker Engine, Docker Compose, and NVIDIA Container Toolkit
-- OpenRouter API key
+- OpenRouter API key for the voice Talker
+- ChatGPT Plus or Pro with Pi logged into the OpenAI Codex provider
 
 The current GPU speech configuration was verified on an RTX 3090 with 24 GB VRAM.
 
@@ -28,11 +29,21 @@ The current GPU speech configuration was verified on an RTX 3090 with 24 GB VRAM
 cp .env.example .env
 ```
 
-Add your key to `.env`:
+Add your Talker key to `.env`:
 
 ```dotenv
 OPENROUTER_API_KEY=your-key
 ```
+
+Log into the ChatGPT Codex plan with host Pi using `/login`, then securely copy that OAuth credential into the private Pi data volume:
+
+```bash
+pi
+# In Pi: /login → ChatGPT Plus/Pro (Codex)
+docker compose --profile setup run --rm pi-auth-init
+```
+
+The copied credential is stored with mode `0600` in `PI_AGENT_DATA_VOLUME`, where Pi can refresh it without exposing it to `voice-agent`.
 
 Create the sandboxed workspace. The default Pi configuration can read it but cannot modify it:
 
@@ -102,7 +113,7 @@ Pi runs as a non-root user, receives only `./workspace`, and does not receive th
 | --- | --- |
 | Ava voice facade | `src/examples/frontend_backend_agent/prompts.yaml` |
 | Pi chief and worker service | `pi-agent-service/src/server.mjs` |
-| Pi custom OpenRouter model | `pi-agent-service/models.json` |
+| Pi Codex provider and model defaults | `.env` and `docker-compose.yml` |
 | Models, voices, and speech settings | `src/examples/frontend_backend_agent/services.local.yaml` |
 | Browser interface | `client/src/` |
 | Deployment and workspace isolation | `docker-compose.yml` and `.env` |

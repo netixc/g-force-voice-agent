@@ -6,16 +6,17 @@ The deployment reads `.env` through Docker Compose.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | Required | Authenticates the Talker and Pi agents. |
+| `OPENROUTER_API_KEY` | Required | Authenticates the voice Talker only. |
 | `OPENROUTER_APP_NAME` | `G Force Voice Agent` | OpenRouter attribution title. |
-| `CHIEF_PI_PROVIDER` | `openrouter` | Pi model provider. |
-| `CHIEF_PI_MODEL` | `google/gemini-3.7-flash` | Pi chief and worker model. |
+| `CHIEF_PI_PROVIDER` | `openai-codex` | Pi subscription provider. |
+| `CHIEF_PI_MODEL` | `gpt-5.6-sol` | Pi chief and worker model. |
 | `CHIEF_PI_THINKING_LEVEL` | `low` | Pi reasoning level. |
 | `CHIEF_PI_TOOLS` | `read,grep,find,ls` | Tools enabled for chief and worker sessions. |
 | `CHIEF_PI_MAX_WORKERS` | `2` | Maximum concurrent delegated Pi workers. |
 | `PI_AGENT_TIMEOUT_SECONDS` | `300` | Voice gateway timeout for a chief request. |
 | `AGENT_FILLER_THRESHOLD_SECONDS` | `0.3` | Delay before optional neutral progress speech. |
-| `PI_AGENT_DATA_VOLUME` | `g-force-voice-agent_pi_agent_data` | Pi catalog and agent runtime state. |
+| `PI_AGENT_DATA_VOLUME` | `g-force-voice-agent_pi_agent_data` | Pi OAuth credentials, catalog, and agent runtime state. |
+| `PI_AUTH_FILE` | `/root/.pi/agent/auth.json` | Host Pi credential file read only by the setup profile. |
 | `PIPELINE_APP_PORT` | `7860` | Browser application host port. |
 | `PIPELINE_TLS` | `true` | Enables the built-in self-signed HTTPS certificate. |
 | `FASTER_WHISPER_DEVICE` | `cuda` | Faster Whisper inference device. |
@@ -59,15 +60,21 @@ The current prototype does not provide a browser approval dialog. Enabling `bash
 
 ## Language Models
 
-The Talker model is configured in `src/examples/frontend_backend_agent/services.local.yaml`. The Pi model is configured in `pi-agent-service/models.json` because the installed Pi catalog does not currently include `google/gemini-3.7-flash`.
+The roles use separate providers and credentials:
 
-Both roles use interactive OpenRouter requests:
+- The Talker uses OpenRouter `google/gemini-3.7-flash`, configured in `src/examples/frontend_backend_agent/services.local.yaml`.
+- The Pi chief and delegated workers use the built-in `openai-codex/gpt-5.6-sol` catalog entry with a ChatGPT Plus/Pro Codex-plan OAuth credential.
 
-```text
-google/gemini-3.7-flash
+Do not add the OpenRouter `:batch` suffix to the Talker model. The Talker must support OpenAI-compatible `tools` and `tool_choice`.
+
+Authenticate host Pi with `/login` and select **ChatGPT Plus/Pro (Codex)**. Then copy the credential into the private Docker volume:
+
+```bash
+docker compose --profile setup run --rm pi-auth-init
+docker compose up -d --force-recreate pi-agent voice-agent
 ```
 
-Do not add the `:batch` suffix. The Talker model must support OpenAI-compatible `tools` and `tool_choice`. The Pi model must support coding-agent tool calls.
+`pi-auth-init` reads `PI_AUTH_FILE`, copies it with mode `0600` and ownership for the non-root Pi service, and then exits. It does not run during normal startup. Pi automatically refreshes the copied OAuth token in `PI_AGENT_DATA_VOLUME`.
 
 ## Prompts and Persona
 

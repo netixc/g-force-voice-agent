@@ -11,12 +11,14 @@ version: "1.0.0"
 - Docker Engine and Docker Compose
 - NVIDIA Container Toolkit
 - NVIDIA GPU visible to Docker
-- Private `.env` with `OPENROUTER_API_KEY`
+- Private `.env` with `OPENROUTER_API_KEY` for the Talker
+- Host Pi authenticated to ChatGPT Plus/Pro (Codex)
 
 ## Start
 
 ```bash
 docker compose config
+docker compose --profile setup run --rm pi-auth-init
 docker compose up -d --build
 docker compose ps
 ```

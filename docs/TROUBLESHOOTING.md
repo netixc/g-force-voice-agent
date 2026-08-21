@@ -18,12 +18,19 @@ docker compose logs --tail 200 voice-agent pi-agent | grep -E \
 
 A successful request has the same `request_id` in the voice gateway's start/completion lines and Pi's structured received/completed events. Audit events intentionally omit request and response content.
 
-If OpenRouter reports that the model is only available through the Batch API, remove `:batch` from the model ID in `services.local.yaml`.
+If OpenRouter reports that the Talker model is only available through the Batch API, remove `:batch` from the model ID in `services.local.yaml`.
 
-Confirm `OPENROUTER_API_KEY` is set in `.env`, then recreate the service:
+Confirm `OPENROUTER_API_KEY` is set in `.env`, then recreate `voice-agent`:
 
 ```bash
-docker compose up -d --force-recreate voice-agent pi-agent
+docker compose up -d --force-recreate voice-agent
+```
+
+If Pi reports missing or expired OpenAI Codex credentials, run `/login` in host Pi and select **ChatGPT Plus/Pro (Codex)**, then resync and restart Pi:
+
+```bash
+docker compose --profile setup run --rm pi-auth-init
+docker compose up -d --force-recreate pi-agent voice-agent
 ```
 
 ## Pi Cannot Read or Modify Workspace Files

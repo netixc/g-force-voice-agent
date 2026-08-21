@@ -84,18 +84,35 @@ services:
     restart: unless-stopped
     logging: *default-logging
 
+  pi-auth-init:
+    image: node:22-bookworm-slim
+    profiles: [setup]
+    user: "0:0"
+    command:
+      - node
+      - -e
+      - |
+        const fs = require("node:fs");
+        const source = JSON.parse(fs.readFileSync("/source/auth.json", "utf8"));
+        if (!source["openai-codex"]) throw new Error("Host Pi has no openai-codex credential; run /login first");
+        fs.writeFileSync("/agent-data/auth.json", JSON.stringify({ "openai-codex": source["openai-codex"] }), { mode: 0o600 });
+        fs.chownSync("/agent-data/auth.json", 1000, 1000);
+    volumes:
+      - ${PI_AUTH_FILE:-/root/.pi/agent/auth.json}:/source/auth.json:ro
+      - pi-agent-data:/agent-data
+    restart: "no"
+
   pi-agent:
     build:
       context: .
       dockerfile: docker/PiAgent.Dockerfile
     image: g-force-pi-agent-service:latest
     environment:
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is required}
       PORT: "8787"
       PI_WORKSPACE: /workspace
       PI_AGENT_DIR: /agent-data
-      PI_PROVIDER: ${CHIEF_PI_PROVIDER:-openrouter}
-      PI_MODEL: ${CHIEF_PI_MODEL:-google/gemini-3.7-flash}
+      PI_PROVIDER: ${CHIEF_PI_PROVIDER:-openai-codex}
+      PI_MODEL: ${CHIEF_PI_MODEL:-gpt-5.6-sol}
       PI_THINKING_LEVEL: ${CHIEF_PI_THINKING_LEVEL:-low}
       PI_TOOLS: ${CHIEF_PI_TOOLS:-read,grep,find,ls}
       PI_MAX_WORKERS: ${CHIEF_PI_MAX_WORKERS:-2}
