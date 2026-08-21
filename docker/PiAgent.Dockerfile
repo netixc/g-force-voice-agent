@@ -19,7 +19,7 @@ COPY pi-agent-service/models.json ./models.json
 COPY pi-agent-service/src/ ./src/
 
 RUN mkdir -p /workspace /agent-data \
-    && chown -R node:node /app /workspace /agent-data
+    && chown -R node:node /workspace /agent-data
 
 USER node
 

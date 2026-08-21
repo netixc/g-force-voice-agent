@@ -33,7 +33,8 @@ expose booking functionality unless explicitly requested.
 - Keep the primary Pi agent and workers on the configured built-in `openai-codex/gpt-5.6-sol` model unless explicitly requested otherwise.
 - Never copy OAuth values into source files or command output. `pi-auth-init` may copy only the `openai-codex` entry into the private Pi data volume.
 - Keep Faster Whisper on CUDA and Kokoro on `CUDAExecutionProvider` unless a CPU fallback is requested.
-- Keep Pi workspace access read-only by default.
+- Keep Pi workspace access read-only by default, preserve canonical workspace-boundary checks, and do not enable `bash` until it runs in a credential-isolated sandbox.
+- Keep Pi resource discovery disabled in the service; workspace `.pi` resources and context files are untrusted inputs unless an explicit trust design is added.
 - Preserve license headers, `LICENSE`, NVIDIA attribution, and `third_party_oss_license.txt`.
 - Keep active branches focused on the Pi backend. Airline and booking source
  may remain only in archival Git references.

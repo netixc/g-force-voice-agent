@@ -14,6 +14,10 @@ The deployment reads `.env` through Docker Compose.
 | `PI_AGENT_THINKING_LEVEL` | `low` | Pi reasoning level. |
 | `PI_AGENT_TOOLS` | `read,grep,find,ls` | Tools enabled for primary and worker sessions. |
 | `PI_AGENT_MAX_WORKERS` | `2` | Maximum concurrent delegated Pi workers. |
+| `PI_AGENT_MAX_SESSIONS` | `32` | Maximum primary Pi sessions held in memory. |
+| `PI_AGENT_SESSION_IDLE_TTL_SECONDS` | `3600` | Idle time before a persisted session is released from memory. |
+| `PI_AGENT_EVENT_HISTORY_LIMIT` | `100` | Sanitized progress events retained per session. |
+| `PI_AGENT_AUTH_CHECK_TTL_SECONDS` | `60` | Maximum age of the cached readiness authentication check. |
 | `PI_AGENT_TIMEOUT_SECONDS` | `300` | Voice gateway timeout for a delegated request. |
 | `PI_AGENT_URL` | `http://pi-agent:8787` | Pi endpoint used by the voice gateway. |
 | `AGENT_FILLER_THRESHOLD_SECONDS` | `0.3` | Delay before optional neutral progress speech. |
@@ -49,11 +53,15 @@ docker compose up -d --force-recreate
 
 ## Pi Agent Service
 
-Ava is the Chief of Staff. The `pi-agent` service creates one in-memory primary execution `AgentSession` for each voice connection. The primary Pi agent can call `delegate_task` to create a bounded ephemeral worker session. Primary sessions last until the service restarts; long-term personal memory is not implemented yet.
+Ava is the Chief of Staff. The `pi-agent` service creates one persistent primary execution `AgentSession` for each voice connection. Session JSONL files and the external-session index live in `PI_AGENT_DATA_VOLUME`. Idle sessions are released from memory and restored on demand; this conversation persistence is not long-term personal memory. The primary Pi agent can call `delegate_task` to create a bounded, in-memory worker session.
 
-The service mounts only `./workspace` at `/workspace`. The container runs as the non-root `node` user, drops Linux capabilities, uses a read-only root filesystem, and does not receive the Docker socket.
+The service mounts `./workspace` at `/workspace` and its private Pi data volume at `/agent-data`. It runs as the non-root `node` user, drops Linux capabilities, uses a read-only root filesystem, and does not receive the Docker socket. Pi resource discovery is disabled: workspace or agent-data extensions, skills, prompt templates, context files, and appended system prompts are not loaded.
+
+Pi's standard tools accept absolute paths, so Chief OS wraps every enabled filesystem tool with canonical workspace-boundary and symlink checks. The `bash` tool is rejected until terminal execution is moved to a separate sandbox that cannot read Pi credentials. A system-prompt instruction is not treated as a security boundary.
 
 Each request has a correlation ID. `voice-agent` logs Pi request start and completion, while `pi-agent` emits structured `request_received`, `request_completed`, `request_failed`, and `request_aborted` audit events with the same ID. Delegated workers emit corresponding worker events. Audit records include timing and character counts but not user messages, model responses, prompts, or credentials.
+
+The internal `GET /sessions/<session-id>/events` endpoint streams sanitized Server-Sent Events for request, agent, tool, retry, compaction, and worker progress. Event payloads omit prompts, model responses, tool arguments, tool output, and credentials. The endpoint is not published outside the Compose network.
 
 The default tools are read-only:
 
@@ -61,13 +69,13 @@ The default tools are read-only:
 PI_AGENT_TOOLS=read,grep,find,ls
 ```
 
-To permit file changes and commands inside the workspace, explicitly enable the additional tools:
+To permit file changes inside the workspace, explicitly enable the additional tools:
 
 ```dotenv
-PI_AGENT_TOOLS=read,grep,find,ls,edit,write,bash
+PI_AGENT_TOOLS=read,grep,find,ls,edit,write
 ```
 
-The current prototype does not provide a browser approval dialog. Enabling `bash`, `edit`, or `write` grants those tools for every request in that deployment. Keep the service private and never place credentials in `workspace/`. The product policy for future purchase tools requires explicit approval, but no purchase tool is currently exposed.
+The current prototype does not provide a browser approval dialog. Enabling `edit` or `write` grants those tools for every request in that deployment. `bash` currently causes `pi-agent` startup to fail with an explanatory error; do not enable it until a separate terminal sandbox is implemented. Keep the service private and never place credentials in `workspace/`. The product policy for future purchase tools requires explicit approval, but no purchase tool is currently exposed.
 
 Compose still accepts the legacy `CHIEF_PI_PROVIDER`, `CHIEF_PI_MODEL`, `CHIEF_PI_THINKING_LEVEL`, `CHIEF_PI_TOOLS`, and `CHIEF_PI_MAX_WORKERS` names as fallback aliases. Prefer the `PI_AGENT_*` names for new configuration.
 

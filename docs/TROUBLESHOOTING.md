@@ -35,9 +35,11 @@ docker compose up -d --force-recreate pi-agent voice-agent
 
 ## Pi Cannot Read or Modify Workspace Files
 
-Place only the files the assistant needs under `./workspace`. The default `PI_AGENT_TOOLS` setting is read-only. Add `edit`, `write`, or `bash` only when you intentionally grant those capabilities.
+Place only the files the assistant needs under `./workspace`. The default `PI_AGENT_TOOLS` setting is read-only. Add `edit` or `write` only when you intentionally grant those capabilities.
 
-The container runs as a non-root user. If host-created workspace files deny access, update their ownership or permissions without making credentials or unrelated host files accessible.
+Chief OS resolves canonical paths and rejects paths and symlinks that escape `/workspace`. The container runs as a non-root user. If host-created workspace files deny access, update their ownership or permissions without making credentials or unrelated host files accessible.
+
+Do not add `bash` to `PI_AGENT_TOOLS` yet. The service intentionally refuses to start with `bash` enabled until terminal execution has a separate credential-isolated sandbox.
 
 ## CUDA Execution Provider Is Unavailable
 

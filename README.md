@@ -12,7 +12,7 @@ Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-A
 - Kokoro ONNX TTS with CUDA Execution Provider
 - Pipecat with WebRTC and WebSocket transports
 - React browser UI with voice and typed input
-- Sandboxed `/workspace` mount with read-only Pi tools by default
+- Workspace-confined Pi filesystem tools, read-only by default
 
 ## Requirements
 
@@ -76,8 +76,10 @@ docker compose down
 - Ava is the user's Chief of Staff and the primary voice-and-text interface.
 - Greetings and brief acknowledgements can be answered by Ava's fast Talker.
 - Ava currently uses delegation and cancellation tools; substantive requests go to a persistent primary Pi session.
-- The primary Pi agent can inspect the mounted workspace with its enabled tools.
+- Primary session files survive service restarts in `PI_AGENT_DATA_VOLUME`; idle sessions are released from memory and restored on demand.
+- The primary Pi agent can inspect only the mounted workspace through workspace-confined filesystem tools.
 - The primary Pi agent can call `delegate_task` to run bounded work in an ephemeral Pi worker.
+- Sanitized request, agent, tool, and worker progress is available from the internal session event stream.
 - Pi's final response returns through Ava, Kokoro TTS, and the browser transcript.
 
 ## Product Direction
@@ -106,13 +108,13 @@ The default tool set is read-only:
 PI_AGENT_TOOLS=read,grep,find,ls
 ```
 
-Only add `edit`, `write`, or `bash` after reviewing the security implications:
+Add `edit` and `write` only when Pi should modify workspace files:
 
 ```dotenv
-PI_AGENT_TOOLS=read,grep,find,ls,edit,write,bash
+PI_AGENT_TOOLS=read,grep,find,ls,edit,write
 ```
 
-Pi runs as a non-root user, receives only `./workspace`, and does not receive the Docker socket. Do not put `.env`, SSH keys, production credentials, customer data, or other secrets in `workspace/`.
+`bash` is intentionally rejected until terminal execution runs in a separate sandbox without access to Pi OAuth credentials. Pi runs as a non-root user, receives only `./workspace` as task data, and does not receive the Docker socket. Its filesystem tools reject paths and symlinks that escape the workspace. Do not put `.env`, SSH keys, production credentials, customer data, or other secrets in `workspace/`.
 
 ## Customize
 

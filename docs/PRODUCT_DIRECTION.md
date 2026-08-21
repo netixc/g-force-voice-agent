@@ -54,7 +54,7 @@ Ava may execute configured non-purchase actions without an approval prompt. Any 
 The current implementation is an earlier stage of this direction:
 
 - Ava directly uses only delegation and cancellation tools.
-- The browser does not yet provide task progress, a worker activity panel, or direct Pi chat.
+- The Pi service exposes sanitized progress events, but the browser does not yet provide the task panel, worker activity interface, or direct Pi chat.
 - One persistent primary Pi session serves each voice connection and may create ephemeral workers.
 - Pi can access the configured `workspace/` mount according to its enabled tools; per-task file handoff is not implemented.
 - Docker Compose provides the local GPU deployment. A hosted/local-GPU split is not implemented.
