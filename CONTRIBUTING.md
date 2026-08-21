@@ -8,9 +8,10 @@ This repository is a working prototype intended for iterative development.
 cp .env.example .env
 uv sync --dev
 npm --prefix client ci
+npm --prefix pi-agent-service ci --ignore-scripts
 ```
 
-Keep API keys and local deployment overrides out of Git.
+For live deployment, authenticate host Pi with ChatGPT Plus/Pro (Codex), then run `docker compose --profile setup run --rm pi-auth-init`. Keep API keys, OAuth credentials, and local deployment overrides out of Git.
 
 ## Before a Change
 
@@ -30,7 +31,7 @@ npm --prefix client run build
 docker compose config
 ```
 
-GPU, OpenRouter, and browser behavior must also be tested on a suitable deployment when those surfaces change.
+GPU, OpenRouter Talker, OpenAI Codex Pi, and browser behavior must also be tested on a suitable deployment when those surfaces change.
 
 ## Pull Requests
 

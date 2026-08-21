@@ -21,7 +21,7 @@ Update documentation when a change affects:
 - Environment variables or defaults
 - Compose services, ports, volumes, or GPU behavior
 - Models, prompts, voices, transports, or browser controls
-- Booking capabilities or user-visible errors
+- Pi provider, OAuth setup, workspace permissions, audit behavior, or user-visible errors
 - Setup, validation, or deployment commands
 
 ## Validation

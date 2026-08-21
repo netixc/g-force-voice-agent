@@ -1,8 +1,10 @@
-# Demonstration Booking Database
+# Dormant Demonstration Booking Database
 
-The booking sidecar uses SQLite data seeded from `seed_data/flights.jsonl` and `seed_data/pnrs.jsonl`. It supports the prototype's new flight searches, new bookings, and PNR status checks.
+This directory is retained as upstream demonstration source and is not loaded by the active Ava runtime. Docker Compose exposes only the Pi backend; it does not start a booking sidecar, publish a booking port, or create a booking-data volume.
 
-Useful sample PNRs include:
+The SQLite implementation can seed local demonstration data from `seed_data/flights.jsonl` and `seed_data/pnrs.jsonl`. The fixtures are synthetic and must not be treated as production reservations or connected to real customer data.
+
+Useful dormant sample PNRs include:
 
 | PNR | Passenger | Flight | Status |
 | --- | --- | --- | --- |
@@ -11,14 +13,4 @@ Useful sample PNRs include:
 | `GHI789` | Maria Garcia | AA789 | Cancelled due to weather |
 | `JKL234` | Ahmed Khan | AA106 | Delayed |
 
-The database is demonstration data, not a production reservation system. Runtime state is stored in the Docker volume configured by `BOOKING_DATA_VOLUME`.
-
-Reset project-owned booking data with care:
-
-```bash
-docker compose down
-docker volume rm g-force-voice-agent_booking_data
-docker compose up -d
-```
-
-Do not remove the volume if it points to a shared or existing deployment database.
+Any manual use of this package is outside the supported Pi-only deployment and must use an explicitly chosen local database path.

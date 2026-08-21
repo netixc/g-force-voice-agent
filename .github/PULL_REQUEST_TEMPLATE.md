@@ -21,4 +21,4 @@
 
 ## Security
 
-- [ ] No credentials, customer data, model caches, databases, or generated artifacts are included
+- [ ] No API keys, OAuth credentials, workspace data, model caches, databases, or generated artifacts are included
