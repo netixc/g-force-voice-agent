@@ -55,15 +55,24 @@ docker compose exec voice-agent nvidia-smi
 
 For Docker inside a Proxmox LXC, NVIDIA cgroup management can fail. Set `no-cgroups = true` in `/etc/nvidia-container-runtime/config.toml` when the LXC host already controls device access.
 
-## First Session Is Slow
+## Model Download Does Not Finish
 
-The first independent session downloads Faster Whisper and Kokoro. Later sessions reuse `MODEL_CACHE_VOLUME`.
+The one-shot `model-init` service must finish before `voice-agent` starts. Follow its progress:
 
-Check the cache:
+```bash
+docker compose logs -f model-init
+```
+
+Downloads resume in `MODEL_CACHE_VOLUME` after a restart. Set `HF_TOKEN` in `.env` if unauthenticated Hugging Face rate limits prevent completion. Keep `HF_DOWNLOAD_WORKERS=1` and `HF_HUB_DISABLE_XET=true` for reliable resumable downloads.
+
+Check the cache and rerun initialization:
 
 ```bash
 docker volume inspect "$(grep '^MODEL_CACHE_VOLUME=' .env | cut -d= -f2-)"
+docker compose run --rm model-init
 ```
+
+Do not repeatedly restart `voice-agent` while a model is downloading.
 
 ## Browser Cannot Use the Microphone
 

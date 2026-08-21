@@ -13,6 +13,20 @@ x-app-image: &app-image
   image: g-force-voice-agent:latest
 
 services:
+  model-init:
+    <<: *app-image
+    command: ["uv", "run", "python", "src/prefetch_models.py"]
+    environment:
+      FASTER_WHISPER_MODEL: ${FASTER_WHISPER_MODEL:-deepdml/faster-whisper-large-v3-turbo-ct2}
+      HF_DOWNLOAD_WORKERS: ${HF_DOWNLOAD_WORKERS:-1}
+      HF_HUB_DISABLE_XET: ${HF_HUB_DISABLE_XET:-true}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ./src:/app/src:ro
+      - model-cache:/root/.cache
+    restart: "no"
+    logging: *default-logging
+
   voice-agent:
     <<: *app-image
     command: ["uv", "run", "python", "src/server.py", "--host", "0.0.0.0"]
@@ -28,6 +42,7 @@ services:
       PIPELINE_TLS: ${PIPELINE_TLS:-true}
       FASTER_WHISPER_DEVICE: ${FASTER_WHISPER_DEVICE:-cuda}
       FASTER_WHISPER_COMPUTE_TYPE: ${FASTER_WHISPER_COMPUTE_TYPE:-float16}
+      HF_HUB_DISABLE_XET: ${HF_HUB_DISABLE_XET:-true}
       ONNX_PROVIDER: ${ONNX_PROVIDER:-CUDAExecutionProvider}
       AGENT_BACKEND: ${AGENT_BACKEND:-pi}
       PI_AGENT_URL: ${PI_AGENT_URL:-http://pi-agent:8787}
@@ -38,6 +53,8 @@ services:
       - ./examples_registry.yaml:/app/examples_registry.yaml:ro
       - model-cache:/root/.cache
     depends_on:
+      model-init:
+        condition: service_completed_successfully
       pi-agent:
         condition: service_healthy
       booking-server:

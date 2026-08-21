@@ -21,7 +21,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-The expected services are `voice-agent`, `pi-agent`, and `booking-server`. The browser endpoint is `https://<host>:7860/` by default.
+The expected long-running services are `voice-agent`, `pi-agent`, and `booking-server`. The one-shot `model-init` service must complete successfully before `voice-agent` starts. The browser endpoint is `https://<host>:7860/` by default.
 
 ## Verify GPU Runtime
 
@@ -36,7 +36,7 @@ The ONNX provider list must include `CUDAExecutionProvider`. Start a browser ses
 ## Logs
 
 ```bash
-docker compose logs -f voice-agent pi-agent booking-server
+docker compose logs -f model-init voice-agent pi-agent booking-server
 ```
 
 ## Stop

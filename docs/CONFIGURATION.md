@@ -22,6 +22,10 @@ The deployment reads `.env` through Docker Compose.
 | `FASTER_WHISPER_DEVICE` | `cuda` | Faster Whisper inference device. |
 | `FASTER_WHISPER_COMPUTE_TYPE` | `float16` | Faster Whisper CTranslate2 precision. |
 | `FASTER_WHISPER_NO_SPEECH_PROB` | `0.4` | No-speech filtering threshold. |
+| `FASTER_WHISPER_MODEL` | `deepdml/faster-whisper-large-v3-turbo-ct2` | Hugging Face model prefetched by `model-init`. |
+| `HF_DOWNLOAD_WORKERS` | `1` | Parallel Hugging Face downloads; one is safest for resumable startup. |
+| `HF_HUB_DISABLE_XET` | `true` | Uses standard resumable Hugging Face downloads instead of Xet. |
+| `HF_TOKEN` | Empty | Optional Hugging Face token for higher download rate limits. |
 | `ONNX_PROVIDER` | `CUDAExecutionProvider` | Kokoro ONNX execution provider. |
 | `CHAT_HISTORY_RECENT_TURNS` | `20` | Number of recent messages retained in Talker context. |
 | `MODEL_CACHE_VOLUME` | `g-force-voice-agent_model_cache` | Docker volume for downloaded speech models and package caches. |
@@ -93,7 +97,13 @@ Select the `talker` prompt in the browser when using this mode. The `booking-ser
 
 ## Speech
 
-Faster Whisper and Kokoro run in the voice-agent process on GPU 0. Docker exposes the device and provides the CUDA, cuDNN, cuBLAS, cuFFT, and cuRAND library paths.
+The one-shot `model-init` service downloads and verifies Faster Whisper and Kokoro before `voice-agent` starts. Artifacts are stored in `MODEL_CACHE_VOLUME`, so image rebuilds and container recreation do not download them again. To follow first-start progress:
+
+```bash
+docker compose logs -f model-init
+```
+
+Faster Whisper and Kokoro run in the voice-agent process on GPU 0 after the prefetch completes. Docker exposes the device and provides the CUDA, cuDNN, cuBLAS, cuFFT, and cuRAND library paths.
 
 Set `ONNX_PROVIDER=CPUExecutionProvider` only when you intentionally want Kokoro on the CPU. The pipeline rejects an unavailable requested provider instead of silently accepting a fallback.
 
