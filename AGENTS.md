@@ -4,7 +4,11 @@
 
 This repository contains one working Ava chief-of-staff voice-agent prototype derived from NVIDIA Nemotron Voice Agent. Preserve microphone and typed input, the OpenRouter Talker, persistent Pi chief sessions, delegated Pi workers, GPU Faster Whisper, and GPU Kokoro.
 
-The active backend is Pi only. The legacy airline package is dormant upstream demonstration source: do not expose it through Compose, the service registry, prompts, or user-facing configuration, and do not connect it to real customer data.
+The active repository is Pi-only. Legacy airline demonstration source may be  
+removed from active branches after it is preserved in an archival branch or     
+tag. Document the archival reference and NVIDIA upstream repository instead of  
+retaining the airline implementation in the active tree. Do not restore or      
+expose booking functionality unless explicitly requested.
 
 ## Sources of Truth
 
@@ -29,6 +33,8 @@ The active backend is Pi only. The legacy airline package is dormant upstream de
 - Keep Faster Whisper on CUDA and Kokoro on `CUDAExecutionProvider` unless a CPU fallback is requested.
 - Keep Pi workspace access read-only by default.
 - Preserve license headers, `LICENSE`, NVIDIA attribution, and `third_party_oss_license.txt`.
+- Keep active branches focused on the Pi backend. Airline and booking source  
+ may remain only in archival Git references.
 
 ## Workflows
 
