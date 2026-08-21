@@ -97,13 +97,22 @@ Select the `talker` prompt in the browser when using this mode. The `booking-ser
 
 ## Speech
 
-The one-shot `model-init` service downloads Faster Whisper and Kokoro before `voice-agent` starts, loads Faster Whisper with the configured CUDA device, and parses Kokoro with `CUDAExecutionProvider`. Artifacts are stored in `MODEL_CACHE_VOLUME`, so image rebuilds and container recreation do not download them again. A missing, partial, or corrupt artifact is downloaded again atomically. To follow first-start progress:
+The one-shot `model-init` service downloads Faster Whisper and Kokoro before `voice-agent` starts, loads Faster Whisper with the configured CUDA device, and parses Kokoro with `CUDAExecutionProvider`. Artifacts are stored in `MODEL_CACHE_VOLUME`, so image rebuilds and container recreation do not download them again. A missing, partial, or corrupt artifact is downloaded again atomically.
+
+The expected startup order is:
+
+1. `model-init` downloads or verifies both speech models on GPU 0.
+2. `model-init` exits with status `0`.
+3. Compose starts `voice-agent` after the successful exit.
+4. Each browser connection loads the cached models into GPU memory for its session.
+
+To follow first-start progress:
 
 ```bash
 docker compose logs -f model-init
 ```
 
-Faster Whisper and Kokoro run in the voice-agent process on GPU 0 after the prefetch completes. Docker exposes the device and provides the CUDA, cuDNN, cuBLAS, cuFFT, and cuRAND library paths.
+Faster Whisper and Kokoro run in the voice-agent process on GPU 0 after the prefetch completes. Docker exposes the device and provides the CUDA, cuDNN, cuBLAS, cuFFT, and cuRAND library paths. A working session logs `device=cuda` for ASR and `execution_provider=CUDAExecutionProvider` for TTS.
 
 Set `ONNX_PROVIDER=CPUExecutionProvider` only when you intentionally want Kokoro on the CPU. The pipeline rejects an unavailable requested provider instead of silently accepting a fallback.
 

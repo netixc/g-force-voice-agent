@@ -48,7 +48,9 @@ docker compose logs -f model-init
 docker compose ps
 ```
 
-Open `https://localhost:7860/`, accept the development certificate, and connect. Replace `localhost` with the server IP for remote access.
+In `docker compose ps -a`, `model-init` should show `Exited (0)`; this is the expected successful state for the one-shot initializer. The three long-running services should show `healthy`.
+
+Open `https://localhost:7860/`, accept the development certificate, and connect. Replace `localhost` with the server IP for remote access. The first connection loads the cached speech models into GPU memory, but does not download them again.
 
 ```bash
 # Follow logs
@@ -56,6 +58,21 @@ docker compose logs -f voice-agent pi-agent
 
 # Stop without deleting model caches or agent state
 docker compose down
+```
+
+## Runtime Flow
+
+- Greetings and brief acknowledgements can be answered by Ava's fast Talker.
+- Substantive questions and tasks are sent to the persistent chief Pi session.
+- The chief can inspect the mounted workspace with its enabled tools.
+- The chief can call `delegate_task` to run bounded work in an ephemeral Pi worker.
+- The chief's final response returns through Kokoro TTS and the browser transcript.
+
+Verify the active GPU speech path in the logs:
+
+```bash
+docker compose logs --tail 200 voice-agent | grep -E \
+  'Loaded Whisper model|device=cuda|execution_provider=CUDAExecutionProvider|Client connected'
 ```
 
 ## Pi Permissions

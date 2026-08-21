@@ -72,7 +72,18 @@ docker volume inspect "$(grep '^MODEL_CACHE_VOLUME=' .env | cut -d= -f2-)"
 docker compose run --rm model-init
 ```
 
-Do not repeatedly restart `voice-agent` while a model is downloading.
+Do not repeatedly restart `voice-agent` while a model is downloading. `model-init` showing `Exited (0)` is success, not a crashed service.
+
+## First Connection Pauses for a Few Seconds
+
+Model files are downloaded once, but Faster Whisper and Kokoro are instantiated for each browser session. A short first-connection pause while the cached models enter GPU memory is expected. Confirm completion with:
+
+```bash
+docker compose logs --tail 200 voice-agent | grep -E \
+  'Loaded Whisper model|device=cuda|execution_provider=CUDAExecutionProvider|pipeline is now ready'
+```
+
+If the log contains `INVALID_PROTOBUF`, rerun `docker compose run --rm model-init`. The initializer removes partial Kokoro artifacts, downloads them atomically, and validates them before allowing normal startup.
 
 ## Browser Cannot Use the Microphone
 
@@ -95,4 +106,4 @@ Then run `docker compose up -d` again.
 
 ## ONNX Thread-Affinity Warnings
 
-ONNX Runtime can print `pthread_setaffinity_np failed` inside a Proxmox LXC. The warning is nonfatal when synthesis succeeds and `CUDAExecutionProvider` remains active.
+ONNX Runtime can print `pthread_setaffinity_np failed` inside a Proxmox LXC. It can also report that shape-related nodes were assigned to the CPU. These warnings are nonfatal when the log confirms `execution_provider=CUDAExecutionProvider` and Kokoro produces audio.
