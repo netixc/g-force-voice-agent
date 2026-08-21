@@ -1,5 +1,5 @@
 {
-  "name": "g-force-pi-agent-service",
+  "name": "chief-os-pi-agent-service",
   "private": true,
   "version": "0.1.0",
   "type": "module",

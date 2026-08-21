@@ -24,7 +24,7 @@ FROM nvcr.io/nvidia/base/ubuntu:noble-20260610
 
 # Image metadata
 LABEL maintainer="NVIDIA"
-LABEL description="G Force Voice Agent"
+LABEL description="Chief OS"
 LABEL version="0.1"
 
 ENV PYTHONUNBUFFERED=1

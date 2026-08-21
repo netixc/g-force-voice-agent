@@ -1,7 +1,7 @@
 [project]
-name = "g-force-voice-agent"
+name = "chief-os"
 version = "0.1.0"
-description = "GPU-accelerated Pi chief-of-staff voice agent with OpenRouter, Faster Whisper, and Kokoro"
+description = "GPU-accelerated Ava Chief of Staff with Pi execution agents, Faster Whisper, and Kokoro"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [

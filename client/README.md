@@ -1,6 +1,6 @@
-# G Force Voice Agent Client
+# Chief OS Client
 
-React and TypeScript browser interface for the G Force Voice Agent. It supports WebRTC and WebSocket sessions, microphone and typed input, transcripts, voice controls, service configuration, and latency metrics.
+React and TypeScript browser interface for Chief OS. It supports WebRTC and WebSocket sessions, microphone and typed input, transcripts, voice controls, service configuration, and latency metrics.
 
 The client is based on the browser interface from NVIDIA [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) and uses the Pipecat Client SDK.
 

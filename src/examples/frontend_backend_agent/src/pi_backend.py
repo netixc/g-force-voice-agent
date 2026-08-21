@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 
-"""Session-local client for the Pi chief-of-staff agent service."""
+"""Session-local client for the primary Pi agent service."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ class PiAgentBackend:
         *,
         on_started: Callable[[AgentLifecycleEvent], Awaitable[None]] | None = None,
     ) -> dict[str, Any]:
-        """Send a user request to the session's Pi chief-of-staff instance."""
+        """Send Ava's delegated request to the session's primary Pi agent."""
         del slots
         clean_query = query.strip()
         call_id = uuid.uuid4().hex[:12]

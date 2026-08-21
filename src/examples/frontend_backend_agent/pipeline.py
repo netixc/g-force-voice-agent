@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 
-"""Ava cascaded pipeline: STT -> Talker LLM -> Pi chief -> TTS."""
+"""Ava cascaded pipeline: STT -> Chief-of-Staff Talker -> Pi agent -> TTS."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from pipecat.transports.base_transport import TransportParams
 from pipecat.workers.runner import WorkerRunner
 
 import examples_registry
-from examples.frontend_backend_agent.src.chief_tools import TOOLS_SCHEMA as CHIEF_TOOLS_SCHEMA
+from examples.frontend_backend_agent.src.ava_tools import TOOLS_SCHEMA as AVA_TOOLS_SCHEMA
 from examples.frontend_backend_agent.src.pi_backend import PiAgentBackend
 from examples.frontend_backend_agent.src.tool_handlers import build_handlers
 from examples.shared.audio_recorder import create_audio_recorder
@@ -75,7 +75,7 @@ def _llm_connection_kwargs(base_url: str) -> dict:
 
     headers: dict[str, str] = {}
     http_referer = os.getenv("OPENROUTER_HTTP_REFERER", "").strip()
-    app_name = os.getenv("OPENROUTER_APP_NAME", "G Force Voice Agent").strip()
+    app_name = os.getenv("OPENROUTER_APP_NAME", "Chief OS").strip()
     if http_referer:
         headers["HTTP-Referer"] = http_referer
     if app_name:
@@ -305,7 +305,7 @@ async def bot(runner_args: RunnerArguments) -> None:
 
     # --- Context + aggregators ---
     messages = _build_context_messages(talker_prompt, system_prompt)
-    context = LLMContext(messages, tools=CHIEF_TOOLS_SCHEMA, tool_choice="auto")
+    context = LLMContext(messages, tools=AVA_TOOLS_SCHEMA, tool_choice="auto")
     preserve_prompt_messages = len(messages)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,

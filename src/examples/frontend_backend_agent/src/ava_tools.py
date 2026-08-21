@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 
-"""Frontend-visible tools for the Pi chief-of-staff backend."""
+"""Tools available to Ava for delegating work to the Pi backend."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ CALL_BACKEND_TOOL: dict = {
     "function": {
         "name": "call_backend",
         "description": (
-            "Send the user's complete request to their persistent Pi chief-of-staff session. "
-            "Use this for questions, planning, project work, and follow-up requests."
+            "Delegate the user's complete request to their persistent primary Pi agent. "
+            "Use this for questions, research, project work, and follow-up requests."
         ),
         "parameters": {
             "type": "object",
@@ -37,7 +37,7 @@ CANCEL_BACKEND_TOOL: dict = {
     "type": "function",
     "function": {
         "name": "cancel_backend",
-        "description": "Stop the active Pi chief-of-staff request when the user asks to stop or cancel.",
+        "description": "Stop the active delegated Pi request when the user asks to stop or cancel.",
         "parameters": {
             "type": "object",
             "properties": {},

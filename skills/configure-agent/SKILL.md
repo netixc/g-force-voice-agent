@@ -21,7 +21,7 @@ Use this workflow for changes to:
 1. Identify the smallest configuration surface that satisfies the request.
 2. Preserve `OPENROUTER_API_KEY` in private `.env` and Codex OAuth in `PI_AGENT_DATA_VOLUME`; never print or commit either credential.
 3. Keep the Talker on an interactive, tool-capable OpenRouter model without the `:batch` suffix.
-4. Keep Pi chief and workers on the configured built-in `openai-codex/gpt-5.6-sol` model unless the request explicitly changes it.
+4. Keep the primary Pi agent and workers on the configured built-in `openai-codex/gpt-5.6-sol` model unless the request explicitly changes it.
 5. Keep Faster Whisper and Kokoro on GPU 0 unless the request explicitly changes hardware placement.
 6. Restart `voice-agent` after YAML or prompt changes:
 

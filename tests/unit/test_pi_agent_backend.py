@@ -11,7 +11,7 @@ from examples.frontend_backend_agent.src.pi_backend import PiAgentBackend
 
 
 class PiAgentBackendTests(unittest.IsolatedAsyncioTestCase):
-    async def test_call_returns_speakable_chief_response(self):
+    async def test_call_returns_speakable_pi_response(self):
         backend = PiAgentBackend("http://pi-agent:8787")
         events = []
 

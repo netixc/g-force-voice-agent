@@ -11,7 +11,7 @@ consumer:
       extra_params: '{"extra_body":{"reasoning":{"effort":"low"}}}'
   agent-server:
     pi:
-      name: "Pi Chief-of-Staff Agent"
+      name: "Primary Pi Execution Agent"
       server: "http://pi-agent:8787"
   tts:
     magpie-multilingual-tts:

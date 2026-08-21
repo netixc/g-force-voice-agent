@@ -1,13 +1,13 @@
-# Ava Chief of Staff
+# Chief OS
 
-A working prototype for a GPU-accelerated voice and chat assistant backed by persistent Pi coding-agent sessions. Users can speak or type in the browser, while Ava delegates substantive requests to a private chief-of-staff agent that can inspect a sandboxed workspace and delegate bounded work to ephemeral Pi workers.
+A working prototype for a GPU-accelerated voice and chat Chief of Staff backed by persistent Pi coding-agent sessions. Users speak or type to Ava, the Chief of Staff. Ava delegates substantive work to a primary Pi execution agent, which can inspect a sandboxed workspace and delegate bounded work to ephemeral Pi workers.
 
 Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) blueprint and Pipecat.
 
 ## Stack
 
 - OpenRouter `google/gemini-3.7-flash` for the voice Talker
-- Pi SDK chief and worker sessions using Codex-plan `openai-codex/gpt-5.6-sol`
+- Pi SDK primary-agent and worker sessions using Codex-plan `openai-codex/gpt-5.6-sol`
 - Faster Whisper Large V3 Turbo on an NVIDIA GPU
 - Kokoro ONNX TTS with CUDA Execution Provider
 - Pipecat with WebRTC and WebSocket transports
@@ -73,11 +73,18 @@ docker compose down
 
 ## Runtime Flow
 
+- Ava is the user's Chief of Staff and the primary voice-and-text interface.
 - Greetings and brief acknowledgements can be answered by Ava's fast Talker.
-- Substantive questions and tasks are sent to the persistent chief Pi session.
-- The chief can inspect the mounted workspace with its enabled tools.
-- The chief can call `delegate_task` to run bounded work in an ephemeral Pi worker.
-- The chief's final response returns through Kokoro TTS and the browser transcript.
+- Ava currently uses delegation and cancellation tools; substantive requests go to a persistent primary Pi session.
+- The primary Pi agent can inspect the mounted workspace with its enabled tools.
+- The primary Pi agent can call `delegate_task` to run bounded work in an ephemeral Pi worker.
+- Pi's final response returns through Ava, Kokoro TTS, and the browser transcript.
+
+## Product Direction
+
+The target experience keeps one main conversation with Ava while adding direct Chief-of-Staff tools, visible task and worker progress, and an option to open a direct chat with a Pi agent. Direct Pi tasks should receive only the task context and files Ava or the user explicitly provides. The local deployment remains the first target; a future hosted mode must keep speech recognition and synthesis on the user's local GPU. Any future purchasing capability must require explicit user approval.
+
+The current prototype does not yet provide the progress panel, direct Pi chat, per-task file handoff, or purchase approval UI. Its Pi service can access the configured `workspace/` mount, subject to the enabled tools.
 
 Verify the active GPU speech path and Pi request audit trail in the logs:
 
@@ -96,13 +103,13 @@ The same `request_id` appears in both services, proving that the voice gateway s
 The default tool set is read-only:
 
 ```dotenv
-CHIEF_PI_TOOLS=read,grep,find,ls
+PI_AGENT_TOOLS=read,grep,find,ls
 ```
 
 Only add `edit`, `write`, or `bash` after reviewing the security implications:
 
 ```dotenv
-CHIEF_PI_TOOLS=read,grep,find,ls,edit,write,bash
+PI_AGENT_TOOLS=read,grep,find,ls,edit,write,bash
 ```
 
 Pi runs as a non-root user, receives only `./workspace`, and does not receive the Docker socket. Do not put `.env`, SSH keys, production credentials, customer data, or other secrets in `workspace/`.
@@ -111,19 +118,19 @@ Pi runs as a non-root user, receives only `./workspace`, and does not receive th
 
 | Area | Path |
 | --- | --- |
-| Ava voice facade | `src/examples/frontend_backend_agent/prompts.yaml` |
-| Pi chief and worker service | `pi-agent-service/src/server.mjs` |
+| Ava Chief-of-Staff behavior | `src/examples/frontend_backend_agent/prompts.yaml` |
+| Primary Pi agent and worker service | `pi-agent-service/src/server.mjs` |
 | Pi Codex provider and model defaults | `.env` and `docker-compose.yml` |
 | Models, voices, and speech settings | `src/examples/frontend_backend_agent/services.local.yaml` |
 | Browser interface | `client/src/` |
 | Deployment and workspace isolation | `docker-compose.yml` and `.env` |
 | AI coding-agent guidance | `AGENTS.md` and `skills/` |
 
-Refer to [Configuration](docs/CONFIGURATION.md), [Troubleshooting](docs/TROUBLESHOOTING.md), and [Contributing](CONTRIBUTING.md).
+Refer to [Product Direction](docs/PRODUCT_DIRECTION.md), [Configuration](docs/CONFIGURATION.md), [Troubleshooting](docs/TROUBLESHOOTING.md), and [Contributing](CONTRIBUTING.md).
 
 ## Upstream and Legacy Archive
 
-This Pi-only branch derives from NVIDIA's [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent). The retired airline and booking demonstration is preserved outside the active tree at tag [`airline-demo-final`](https://github.com/netixc/g-force-voice-agent/tree/airline-demo-final) and branch [`archive/airline-demo`](https://github.com/netixc/g-force-voice-agent/tree/archive/airline-demo), both rooted at commit [`e922735b4d74018946619f8463dedbd6f219860e`](https://github.com/netixc/g-force-voice-agent/commit/e922735b4d74018946619f8463dedbd6f219860e). Do not restore that functionality to active branches without an explicit scope change.
+This Pi-focused repository derives from NVIDIA's [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent). The retired airline and booking demonstration is preserved outside the active tree at tag [`airline-demo-final`](https://github.com/netixc/chief-os/tree/airline-demo-final) and branch [`archive/airline-demo`](https://github.com/netixc/chief-os/tree/archive/airline-demo), both rooted at commit [`e922735b4d74018946619f8463dedbd6f219860e`](https://github.com/netixc/chief-os/commit/e922735b4d74018946619f8463dedbd6f219860e). Do not restore that functionality to active branches without an explicit scope change.
 
 Inspect the archive without changing this checkout:
 

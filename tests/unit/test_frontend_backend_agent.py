@@ -34,7 +34,7 @@ class _Agent:
         return response_hint(
             reason="agent_completed",
             action="answer_directly",
-            response_text="The Pi chief completed the task.",
+            response_text="The Pi agent completed the task.",
             context="chief_of_staff",
         )
 
