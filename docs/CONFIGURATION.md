@@ -8,16 +8,15 @@ The deployment reads `.env` through Docker Compose.
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | Required | Authenticates the Talker and Pi agents. |
 | `OPENROUTER_APP_NAME` | `G Force Voice Agent` | OpenRouter attribution title. |
-| `AGENT_BACKEND` | `pi` | Selects `pi` chief-of-staff mode or preserved `airline` mode. |
 | `CHIEF_PI_PROVIDER` | `openrouter` | Pi model provider. |
 | `CHIEF_PI_MODEL` | `google/gemini-3.7-flash` | Pi chief and worker model. |
 | `CHIEF_PI_THINKING_LEVEL` | `low` | Pi reasoning level. |
 | `CHIEF_PI_TOOLS` | `read,grep,find,ls` | Tools enabled for chief and worker sessions. |
 | `CHIEF_PI_MAX_WORKERS` | `2` | Maximum concurrent delegated Pi workers. |
 | `PI_AGENT_TIMEOUT_SECONDS` | `300` | Voice gateway timeout for a chief request. |
+| `AGENT_FILLER_THRESHOLD_SECONDS` | `0.3` | Delay before optional neutral progress speech. |
 | `PI_AGENT_DATA_VOLUME` | `g-force-voice-agent_pi_agent_data` | Pi catalog and agent runtime state. |
 | `PIPELINE_APP_PORT` | `7860` | Browser application host port. |
-| `BOOKING_SERVER_PORT` | `8001` | Preserved demonstration booking API host port. |
 | `PIPELINE_TLS` | `true` | Enables the built-in self-signed HTTPS certificate. |
 | `FASTER_WHISPER_DEVICE` | `cuda` | Faster Whisper inference device. |
 | `FASTER_WHISPER_COMPUTE_TYPE` | `float16` | Faster Whisper CTranslate2 precision. |
@@ -29,7 +28,6 @@ The deployment reads `.env` through Docker Compose.
 | `ONNX_PROVIDER` | `CUDAExecutionProvider` | Kokoro ONNX execution provider. |
 | `CHAT_HISTORY_RECENT_TURNS` | `20` | Number of recent messages retained in Talker context. |
 | `MODEL_CACHE_VOLUME` | `g-force-voice-agent_model_cache` | Docker volume for downloaded speech models and package caches. |
-| `BOOKING_DATA_VOLUME` | `g-force-voice-agent_booking_data` | Docker volume for demonstration SQLite booking state. |
 
 Recreate services after changing `.env`:
 
@@ -71,11 +69,7 @@ Do not add the `:batch` suffix. The Talker model must support OpenAI-compatible 
 
 ## Prompts and Persona
 
-Edit `src/examples/frontend_backend_agent/prompts.yaml`:
-
-- `chief` controls Ava's voice facade and is the default.
-- `talker` controls the preserved airline voice facade.
-- `thinker` controls preserved airline planning.
+The only exposed prompt is `chief` in `src/examples/frontend_backend_agent/prompts.yaml`; it controls Ava's voice facade.
 
 The Pi chief and worker system prompts are in `pi-agent-service/src/server.mjs`.
 
@@ -84,16 +78,6 @@ Restart the affected services after editing prompts:
 ```bash
 docker compose restart voice-agent pi-agent
 ```
-
-## Preserved Airline Mode
-
-The original demonstration booking workflow remains available:
-
-```dotenv
-AGENT_BACKEND=airline
-```
-
-Select the `talker` prompt in the browser when using this mode. The `booking-server` remains part of Compose to preserve flight search, new booking, and PNR demonstration behavior.
 
 ## Speech
 

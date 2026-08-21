@@ -2,7 +2,7 @@
 
 A working prototype for a GPU-accelerated voice and chat assistant backed by persistent Pi coding-agent sessions. Users can speak or type in the browser, while Ava delegates substantive requests to a private chief-of-staff agent that can inspect a sandboxed workspace and delegate bounded work to ephemeral Pi workers.
 
-Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) blueprint and Pipecat. The preserved airline workflow remains available as a demonstration mode.
+Based on NVIDIA's open source [Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent) blueprint and Pipecat.
 
 ## Stack
 
@@ -48,7 +48,7 @@ docker compose logs -f model-init
 docker compose ps
 ```
 
-In `docker compose ps -a`, `model-init` should show `Exited (0)`; this is the expected successful state for the one-shot initializer. The three long-running services should show `healthy`.
+In `docker compose ps -a`, `model-init` should show `Exited (0)`; this is the expected successful state for the one-shot initializer. The `voice-agent` and `pi-agent` services should show `healthy`.
 
 Open `https://localhost:7860/`, accept the development certificate, and connect. Replace `localhost` with the server IP for remote access. The first connection loads the cached speech models into GPU memory, but does not download them again.
 
@@ -95,20 +95,15 @@ Pi runs as a non-root user, receives only `./workspace`, and does not receive th
 
 | Area | Path |
 | --- | --- |
-| Ava voice facade and preserved airline prompts | `src/examples/frontend_backend_agent/prompts.yaml` |
+| Ava voice facade | `src/examples/frontend_backend_agent/prompts.yaml` |
 | Pi chief and worker service | `pi-agent-service/src/server.mjs` |
 | Pi custom OpenRouter model | `pi-agent-service/models.json` |
 | Models, voices, and speech settings | `src/examples/frontend_backend_agent/services.local.yaml` |
 | Browser interface | `client/src/` |
 | Deployment and workspace isolation | `docker-compose.yml` and `.env` |
-| Preserved airline workflow | `src/examples/frontend_backend_agent/airline/` |
 | AI coding-agent guidance | `AGENTS.md` and `skills/` |
 
 Refer to [Configuration](docs/CONFIGURATION.md), [Troubleshooting](docs/TROUBLESHOOTING.md), and [Contributing](CONTRIBUTING.md).
-
-## Preserved Airline Mode
-
-Set `AGENT_BACKEND=airline` and select the `talker` prompt to use the original demonstration booking workflow. Its local database contains demonstration data only and is not connected to a real airline or customer system.
 
 ## Prototype Status
 

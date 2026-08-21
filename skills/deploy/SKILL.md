@@ -21,7 +21,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-The expected long-running services are `voice-agent`, `pi-agent`, and `booking-server`. The one-shot `model-init` service must complete successfully before `voice-agent` starts. The browser endpoint is `https://<host>:7860/` by default.
+The expected long-running services are `voice-agent` and `pi-agent`. The one-shot `model-init` service must complete successfully before `voice-agent` starts. The browser endpoint is `https://<host>:7860/` by default.
 
 ## Verify GPU Runtime
 
@@ -36,7 +36,7 @@ The ONNX provider list must include `CUDAExecutionProvider`. Start a browser ses
 ## Logs
 
 ```bash
-docker compose logs -f model-init voice-agent pi-agent booking-server
+docker compose logs -f model-init voice-agent pi-agent
 ```
 
 ## Stop
@@ -45,12 +45,12 @@ docker compose logs -f model-init voice-agent pi-agent booking-server
 docker compose down
 ```
 
-Do not add `-v` unless model caches and booking data should be deleted.
+Do not add `-v` unless model caches and Pi agent state should be deleted.
 
 ## Rules
 
 - Preserve named volumes when recreating containers.
 - Avoid exposing `.env` in logs or diagnostics.
-- Do not run another stack on ports `7860` or `8001` simultaneously.
+- Do not run another stack on port `7860` simultaneously.
 - Keep HTTPS enabled for browser microphone and WebRTC use.
 - Document changes to ports, volumes, device selection, or startup commands.

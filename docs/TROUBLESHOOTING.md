@@ -93,13 +93,12 @@ Use HTTPS. Browser microphone and WebRTC APIs generally require a secure context
 
 The project disables the automatic welcome. If you enabled it and then type `hello` while it is speaking, the model can generate 2 similar greetings. Set `welcome_message: false` in `examples_registry.yaml` to wait for the first user message.
 
-## Ports Are Already Allocated
+## Port Is Already Allocated
 
-Either stop the other deployment or change these `.env` values:
+Either stop the other deployment or change the browser port in `.env`:
 
 ```dotenv
 PIPELINE_APP_PORT=7861
-BOOKING_SERVER_PORT=8002
 ```
 
 Then run `docker compose up -d` again.

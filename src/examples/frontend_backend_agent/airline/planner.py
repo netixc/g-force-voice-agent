@@ -13,7 +13,7 @@ from loguru import logger
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.services.nvidia.llm import NvidiaLLMService
 
-from examples.frontend_backend_agent.src.runtime_context import runtime_today
+from examples.frontend_backend_agent.airline.runtime_context import runtime_today
 
 
 class ThinkerPlanner(Protocol):

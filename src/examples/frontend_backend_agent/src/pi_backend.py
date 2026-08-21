@@ -14,7 +14,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from examples.frontend_backend_agent.src.protocol import ThinkerLifecycleEvent, response_hint
+from examples.frontend_backend_agent.src.protocol import AgentLifecycleEvent, response_hint
 
 
 class PiAgentBackend:
@@ -32,13 +32,13 @@ class PiAgentBackend:
         query: str,
         slots: dict[str, Any] | None = None,
         *,
-        on_started: Callable[[ThinkerLifecycleEvent], Awaitable[None]] | None = None,
+        on_started: Callable[[AgentLifecycleEvent], Awaitable[None]] | None = None,
     ) -> dict[str, Any]:
         """Send a user request to the session's Pi chief-of-staff instance."""
         del slots
         clean_query = query.strip()
         call_id = uuid.uuid4().hex[:12]
-        event = ThinkerLifecycleEvent(marker="ThinkerStarted", call_id=call_id, query=clean_query)
+        event = AgentLifecycleEvent(marker="AgentStarted", call_id=call_id, query=clean_query)
         if on_started:
             await on_started(event)
 
@@ -83,10 +83,6 @@ class PiAgentBackend:
             return False
         task.cancel()
         return True
-
-    def cancel_pending_booking(self) -> bool:
-        """Satisfy the shared backend protocol; Pi has no pending booking draft."""
-        return False
 
     async def _abort_remote(self) -> None:
         # Cancellation must not be replaced by an abort transport failure.

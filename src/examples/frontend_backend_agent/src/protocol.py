@@ -1,20 +1,20 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 
-"""Structured protocol between the Talker and the internal Thinker."""
+"""Structured protocol between the Talker and backend agent."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Literal
 
-ThinkerPayloadType = Literal["response_hint", "tool_result"]
-LifecycleMarker = Literal["ThinkerStarted", "IntermediateResponse", "ThinkerCompleted", "ThinkerAborted"]
+AgentPayloadType = Literal["response_hint", "tool_result"]
+LifecycleMarker = Literal["AgentStarted", "IntermediateResponse", "AgentCompleted", "AgentAborted"]
 
 
 @dataclass(slots=True, frozen=True)
-class ThinkerLifecycleEvent:
-    """Internal-only lifecycle/history event for the Talker context/debug log."""
+class AgentLifecycleEvent:
+    """Internal-only lifecycle event for backend-agent progress."""
 
     marker: LifecycleMarker
     call_id: str
@@ -39,6 +39,11 @@ class ThinkerLifecycleEvent:
         return data
 
 
+# Compatibility aliases for the dormant upstream demonstration modules.
+ThinkerPayloadType = AgentPayloadType
+ThinkerLifecycleEvent = AgentLifecycleEvent
+
+
 def response_hint(
     *,
     reason: str,
@@ -49,7 +54,7 @@ def response_hint(
     params_resolved: dict[str, Any] | None = None,
     **extra: Any,
 ) -> dict[str, Any]:
-    """Build a user-facing intermediate Thinker payload."""
+    """Build a user-facing intermediate backend-agent payload."""
     payload: dict[str, Any] = {
         "type": "response_hint",
         "reason": reason,
@@ -74,7 +79,7 @@ def tool_result(
     context: str,
     **extra: Any,
 ) -> dict[str, Any]:
-    """Build a user-facing final Thinker payload."""
+    """Build a user-facing final backend-agent payload."""
     payload: dict[str, Any] = {
         "type": "tool_result",
         "tool": tool,

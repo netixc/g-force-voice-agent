@@ -9,22 +9,10 @@ consumer:
       system_prompt: ""
       max_tokens: 2048
       extra_params: '{"extra_body":{"reasoning":{"effort":"low"}}}'
-  thinker-llm:
-    nemotron-nano:
-      name: "Gemini 3.7 Flash Thinker on OpenRouter"
-      provider: openrouter
-      model_id: "google/gemini-3.7-flash"
-      base_url: "https://openrouter.ai/api/v1"
-      max_tokens: 4096
-      extra_params: '{"extra_body":{"reasoning":{"effort":"low"}}}'
   agent-server:
     pi:
       name: "Pi Chief-of-Staff Agent"
       server: "http://pi-agent:8787"
-  booking-server:
-    default:
-      name: "Booking Server"
-      server: "http://booking-server:8001"
   tts:
     magpie-multilingual-tts:
       name: "Kokoro ONNX (Local GPU)"

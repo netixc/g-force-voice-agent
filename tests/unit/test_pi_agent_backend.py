@@ -23,7 +23,7 @@ class PiAgentBackendTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(payload["response_text"], "I reviewed your priorities.")
         self.assertEqual(payload["context"], "chief_of_staff")
-        self.assertEqual(events[0].marker, "ThinkerStarted")
+        self.assertEqual(events[0].marker, "AgentStarted")
         self.assertIn("/sessions/", request.call_args.args[1])
         self.assertEqual(request.call_args.args[2], {"message": "Review my priorities"})
 

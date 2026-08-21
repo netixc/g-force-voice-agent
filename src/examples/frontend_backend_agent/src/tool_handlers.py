@@ -16,13 +16,13 @@ from loguru import logger
 from pipecat.frames.frames import LLMFullResponseEndFrame, LLMFullResponseStartFrame, LLMTextFrame
 from pipecat.services.llm_service import FunctionCallResultProperties
 
-from examples.frontend_backend_agent.src.protocol import ThinkerLifecycleEvent, is_speakable_payload
+from examples.frontend_backend_agent.src.protocol import AgentLifecycleEvent, is_speakable_payload
 
 if TYPE_CHECKING:
     from pipecat.services.llm_service import FunctionCallParams
 
 
-class ThinkerBackend(Protocol):
+class AgentBackend(Protocol):
     """Minimal runtime interface required by the frontend tool handlers."""
 
     async def call(
@@ -30,18 +30,15 @@ class ThinkerBackend(Protocol):
         query: str,
         slots: dict[str, Any] | None = None,
         *,
-        on_started: Callable[[ThinkerLifecycleEvent], Awaitable[None]] | None = None,
+        on_started: Callable[[AgentLifecycleEvent], Awaitable[None]] | None = None,
     ) -> dict[str, Any]:
-        """Run one Thinker invocation."""
+        """Run one backend-agent invocation."""
 
     def cancel_active(self, reason: str = "new_user_query") -> bool:
-        """Cancel any active Thinker invocation."""
-
-    def cancel_pending_booking(self) -> bool:
-        """Cancel pending domain work that has no active task."""
+        """Cancel any active backend-agent invocation."""
 
 
-def build_handlers(thinker: ThinkerBackend, *, filler_threshold_seconds: float = 0.8) -> dict[str, Callable]:
+def build_handlers(agent: AgentBackend, *, filler_threshold_seconds: float = 0.8) -> dict[str, Callable]:
     """Return tool handlers bound to one session-local backend agent."""
 
     async def handle_call_backend(params: FunctionCallParams) -> None:
@@ -74,9 +71,9 @@ def build_handlers(thinker: ThinkerBackend, *, filler_threshold_seconds: float =
                 except Exception as exc:
                     logger.warning(f"Failed to emit Talker filler: {exc}")
 
-            async def schedule_thinker_started_filler(event: ThinkerLifecycleEvent) -> None:
+            async def schedule_agent_started_filler(event: AgentLifecycleEvent) -> None:
                 nonlocal filler_started, filler_task
-                if event.marker != "ThinkerStarted" or not filler_text:
+                if event.marker != "AgentStarted" or not filler_text:
                     return
                 if filler_started or (filler_task is not None and not filler_task.done()):
                     return
@@ -87,11 +84,11 @@ def build_handlers(thinker: ThinkerBackend, *, filler_threshold_seconds: float =
                 filler_task = asyncio.create_task(emit_filler_after_threshold())
 
             try:
-                payload = await thinker.call(query, slots=slots, on_started=schedule_thinker_started_filler)
+                payload = await agent.call(query, slots=slots, on_started=schedule_agent_started_filler)
             finally:
                 await _cancel_pending_filler(filler_task)
         except asyncio.CancelledError:
-            logger.info("call_backend result suppressed after Thinker abort")
+            logger.info("call_backend result suppressed after agent abort")
             await params.result_callback(
                 {
                     "type": "response_hint",
@@ -124,9 +121,7 @@ def build_handlers(thinker: ThinkerBackend, *, filler_threshold_seconds: float =
         await params.result_callback(payload)
 
     async def handle_cancel_backend(params: FunctionCallParams) -> None:
-        cancelled = thinker.cancel_active("user_cancelled")
-        cleared_pending_booking = thinker.cancel_pending_booking()
-        did_cancel = cancelled or cleared_pending_booking
+        did_cancel = agent.cancel_active("user_cancelled")
         payload = {
             "type": "response_hint",
             "reason": "cancelled" if did_cancel else "nothing_to_cancel",
@@ -158,7 +153,7 @@ async def _emit_talker_response(llm, text: str) -> None:
 
 
 async def _cancel_pending_filler(task: asyncio.Task | None) -> None:
-    """Cancel a delayed filler if the Thinker returned before it fired."""
+    """Cancel a delayed filler if the backend agent returned before it fired."""
     if task is None or task.done():
         return
     task.cancel()

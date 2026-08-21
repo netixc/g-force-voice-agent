@@ -21,9 +21,9 @@ from examples.frontend_backend_agent.airline.plan_parsing import (
     plan_tool_calls,
     string_list,
 )
+from examples.frontend_backend_agent.airline.planner import ThinkerPlanner
 from examples.frontend_backend_agent.airline.pnr_status import pnr_status
 from examples.frontend_backend_agent.airline.state import ThinkerSessionState
-from examples.frontend_backend_agent.src.planner import ThinkerPlanner
 from examples.frontend_backend_agent.src.protocol import ThinkerLifecycleEvent, response_hint
 
 # Thinker tools that only read session state (or are pure). These are safe to

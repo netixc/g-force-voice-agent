@@ -74,7 +74,9 @@ COPY pyproject.toml uv.lock ./
 # Note: Python package source code is available via uv's cache and can be
 # extracted using: uv pip show <package> --files
 # For full source compliance, see /app/legal/third_party_oss_license.txt
-RUN uv venv --python python3.12 && . .venv/bin/activate && uv sync --frozen --no-dev
+RUN uv venv --python python3.12 && . .venv/bin/activate && \
+    uv sync --frozen --no-dev && \
+    uv pip install --python .venv/bin/python --reinstall --no-deps onnxruntime-gpu==1.24.4
 
 # CTranslate2 and ONNX Runtime load CUDA libraries installed by the local speech extras.
 ENV NVIDIA_PYTHON_LIB_DIR=/app/.venv/lib/python3.12/site-packages/nvidia

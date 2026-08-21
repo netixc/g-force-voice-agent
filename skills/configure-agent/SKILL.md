@@ -14,7 +14,7 @@ Use this workflow for changes to:
 - `examples_registry.yaml`
 - `src/examples/frontend_backend_agent/prompts.yaml`
 - `src/examples/frontend_backend_agent/services.local.yaml`
-- Talker, Thinker, ASR, TTS, and welcome-message defaults
+- Talker, Pi agent, ASR, TTS, and welcome-message defaults
 
 ## Procedure
 
