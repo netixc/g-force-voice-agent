@@ -239,7 +239,7 @@ export function Header() {
     <header className="px-4 py-3 border-b">
       <div className="d-flex justify-between items-center">
         <h1 className="text-lg font-semibold">
-          <span style={{ color: "#76b900", fontWeight: 700, letterSpacing: "0.08em" }}>G Force</span> Voice Agent
+          <span style={{ color: "#76b900", fontWeight: 700, letterSpacing: "0.08em" }}>Ava</span> Chief of Staff
         </h1>
         <div className="d-flex items-center gap-3">
           {isConnected && <DevicesSection />}

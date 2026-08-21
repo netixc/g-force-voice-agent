@@ -6,12 +6,13 @@ transports: all
 
 examples:
   frontend-backend-agent:
-    label: G Force Voice Agent
+    label: Ava Chief of Staff
     welcome_message: false
-    slots: [llm, thinker-llm, booking-server, asr, tts]
+    slots: [llm, agent-server, thinker-llm, booking-server, asr, tts]
     defaults:
-      prompt: [talker]
+      prompt: [chief]
       llm: [nemotron-nano]
+      agent-server: [pi]
       thinker-llm: [nemotron-nano]
       booking-server: [default]
       asr: [nemotron-asr-streaming-english]

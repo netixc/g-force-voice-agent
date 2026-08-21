@@ -8,6 +8,9 @@
 **/*.pyc
 client/node_modules
 client/dist
+pi-agent-service/node_modules
+workspace
+pi-agent-data
 tests
 docs
 data

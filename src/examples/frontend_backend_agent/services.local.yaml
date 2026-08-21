@@ -17,6 +17,10 @@ consumer:
       base_url: "https://openrouter.ai/api/v1"
       max_tokens: 4096
       extra_params: '{"extra_body":{"reasoning":{"effort":"low"}}}'
+  agent-server:
+    pi:
+      name: "Pi Chief-of-Staff Agent"
+      server: "http://pi-agent:8787"
   booking-server:
     default:
       name: "Booking Server"

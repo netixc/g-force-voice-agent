@@ -31,7 +31,9 @@ from pipecat.workers.runner import WorkerRunner
 import examples_registry
 from examples.frontend_backend_agent.airline.backend import HTTPBookingBackend
 from examples.frontend_backend_agent.airline.thinker import ThinkerBackend
-from examples.frontend_backend_agent.airline.tools import TOOLS_SCHEMA
+from examples.frontend_backend_agent.airline.tools import TOOLS_SCHEMA as AIRLINE_TOOLS_SCHEMA
+from examples.frontend_backend_agent.src.chief_tools import TOOLS_SCHEMA as CHIEF_TOOLS_SCHEMA
+from examples.frontend_backend_agent.src.pi_backend import PiAgentBackend
 from examples.frontend_backend_agent.src.planner import NvidiaThinkerPlanner
 from examples.frontend_backend_agent.src.runtime_context import runtime_today
 from examples.frontend_backend_agent.src.tool_handlers import build_handlers
@@ -62,6 +64,7 @@ THINKER_FILLER_THRESHOLD_SECONDS = parse_env_float("THINKER_FILLER_THRESHOLD_SEC
 THINKER_TOOL_TIMEOUT_SECONDS = parse_env_float("THINKER_TOOL_TIMEOUT_SECONDS", 30.0, min_value=1.0)
 IN_PROCESS_SERVICE_SERVER = "in-process"
 OPENROUTER_BASE_HOST = "openrouter.ai"
+DEFAULT_AGENT_BACKEND = "pi"
 
 
 def _is_in_process_service(server: str) -> bool:
@@ -121,17 +124,23 @@ def _language(code: str, default: Language = Language.EN_US) -> Language:
             return default
 
 
-def _build_context_messages(base_prompt: str, system_prompt: str = "") -> list[dict]:
+def _build_context_messages(
+    base_prompt: str,
+    system_prompt: str = "",
+    *,
+    include_travel_context: bool = False,
+) -> list[dict]:
     """Build initial Talker context messages."""
-    today = runtime_today()
-    runtime_context = (
-        f"\n\nRuntime context:\n"
-        f"- Today is {today.isoformat()}.\n"
-        f"- Tomorrow is {(today + timedelta(days=1)).isoformat()}.\n"
-        "- For travel dates without a year, choose the next upcoming occurrence relative to today.\n"
-        "- Always pass travel dates to call_backend as ISO YYYY-MM-DD when the date is known."
-    )
-    base_prompt = f"{base_prompt}{runtime_context}"
+    if include_travel_context:
+        today = runtime_today()
+        runtime_context = (
+            f"\n\nRuntime context:\n"
+            f"- Today is {today.isoformat()}.\n"
+            f"- Tomorrow is {(today + timedelta(days=1)).isoformat()}.\n"
+            "- For travel dates without a year, choose the next upcoming occurrence relative to today.\n"
+            "- Always pass travel dates to call_backend as ISO YYYY-MM-DD when the date is known."
+        )
+        base_prompt = f"{base_prompt}{runtime_context}"
     if system_prompt:
         return [
             {"role": "system", "content": system_prompt},
@@ -167,12 +176,10 @@ async def bot(runner_args: RunnerArguments) -> None:
         body.get("prompt_content", ""),
         body.get("prompt_key", ""),
     )
-    thinker_prompt = _load_required_catalog_prompt(THINKER_PROMPT_KEY)
+    backend_mode = os.getenv("AGENT_BACKEND", DEFAULT_AGENT_BACKEND).strip().lower() or DEFAULT_AGENT_BACKEND
     default_llm = load_service_entry("llm", "")
     default_tts = load_service_entry("tts", "")
     default_asr = load_service_entry("asr", "")
-    default_booking_server = load_service_entry("booking-server", "")
-    default_thinker_llm = load_service_entry("thinker-llm", "")
 
     # --- ASR ---
     asr_server = body.get("asr_server", "") or default_asr.get("server", "grpc.nvcf.nvidia.com:443")
@@ -242,45 +249,61 @@ async def bot(runner_args: RunnerArguments) -> None:
         f"extra_params={extra_params or '(none)'}"
     )
 
-    booking_backend_url = _booking_backend_url(default_booking_server)
-    thinker_model_id = body.get("thinker_model_id", "") or default_thinker_llm.get("model_id", "") or model_id
-    thinker_base_url = body.get("thinker_base_url", "") or default_thinker_llm.get("base_url", "") or base_url
-    thinker_max_tokens = _parse_optional_int(
-        body.get("thinker_max_tokens", "") or default_thinker_llm.get("max_tokens"),
-        4096,
-    )
-    thinker_extra_params = parse_json_dict(
-        body.get("thinker_extra_params", "") or default_thinker_llm.get("extra_params", ""),
-        label="thinker_extra_params",
-    )
-    thinker_llm_settings = NvidiaLLMSettings(model=thinker_model_id, max_tokens=thinker_max_tokens)
-    if thinker_extra_params:
-        thinker_llm_settings.extra = thinker_extra_params
-    thinker_llm = NvidiaLLMService(
-        **_llm_connection_kwargs(thinker_base_url),
-        settings=thinker_llm_settings,
-    )
-    thinker_planner = NvidiaThinkerPlanner(
-        llm=thinker_llm,
-        system_prompt=thinker_prompt,
-        max_tokens=thinker_max_tokens,
-    )
-    thinker = ThinkerBackend(
-        backend=HTTPBookingBackend(booking_backend_url),
-        planner=thinker_planner,
-        tool_delay_seconds=THINKER_TOOL_DELAY_MAX_SECONDS,
-        tool_delay_min_seconds=THINKER_TOOL_DELAY_MIN_SECONDS,
-    )
-    logger.info(f"Thinker booking backend: {booking_backend_url}")
-    logger.info(
-        f"Thinker LLM: model={thinker_model_id}, base_url={thinker_base_url}, "
-        f"max_tokens={thinker_max_tokens}, extra_params={thinker_extra_params or '(none)'}"
-    )
-    logger.info(f"Thinker tool delay: {THINKER_TOOL_DELAY_MIN_SECONDS:.3f}s-{THINKER_TOOL_DELAY_MAX_SECONDS:.3f}s")
-    logger.info(f"Thinker filler threshold: {THINKER_FILLER_THRESHOLD_SECONDS:.3f}s")
-    logger.info(f"Thinker tool timeout: {THINKER_TOOL_TIMEOUT_SECONDS:.3f}s")
+    if backend_mode == "airline":
+        default_booking_server = load_service_entry("booking-server", "")
+        default_thinker_llm = load_service_entry("thinker-llm", "")
+        thinker_prompt = _load_required_catalog_prompt(THINKER_PROMPT_KEY)
+        booking_backend_url = _booking_backend_url(default_booking_server)
+        thinker_model_id = body.get("thinker_model_id", "") or default_thinker_llm.get("model_id", "") or model_id
+        thinker_base_url = body.get("thinker_base_url", "") or default_thinker_llm.get("base_url", "") or base_url
+        thinker_max_tokens = _parse_optional_int(
+            body.get("thinker_max_tokens", "") or default_thinker_llm.get("max_tokens"),
+            4096,
+        )
+        thinker_extra_params = parse_json_dict(
+            body.get("thinker_extra_params", "") or default_thinker_llm.get("extra_params", ""),
+            label="thinker_extra_params",
+        )
+        thinker_llm_settings = NvidiaLLMSettings(model=thinker_model_id, max_tokens=thinker_max_tokens)
+        if thinker_extra_params:
+            thinker_llm_settings.extra = thinker_extra_params
+        thinker_llm = NvidiaLLMService(
+            **_llm_connection_kwargs(thinker_base_url),
+            settings=thinker_llm_settings,
+        )
+        thinker_planner = NvidiaThinkerPlanner(
+            llm=thinker_llm,
+            system_prompt=thinker_prompt,
+            max_tokens=thinker_max_tokens,
+        )
+        backend = ThinkerBackend(
+            backend=HTTPBookingBackend(booking_backend_url),
+            planner=thinker_planner,
+            tool_delay_seconds=THINKER_TOOL_DELAY_MAX_SECONDS,
+            tool_delay_min_seconds=THINKER_TOOL_DELAY_MIN_SECONDS,
+        )
+        tools_schema = AIRLINE_TOOLS_SCHEMA
+        backend_timeout = THINKER_TOOL_TIMEOUT_SECONDS
+        logger.info(f"Agent backend: airline, booking_server={booking_backend_url}")
+        logger.info(
+            f"Thinker LLM: model={thinker_model_id}, base_url={thinker_base_url}, "
+            f"max_tokens={thinker_max_tokens}, extra_params={thinker_extra_params or '(none)'}"
+        )
+    elif backend_mode == "pi":
+        default_agent_server = load_service_entry("agent-server", "")
+        agent_server_url = os.getenv("PI_AGENT_URL", "").strip() or str(
+            default_agent_server.get("server") or "http://localhost:8787"
+        )
+        backend_timeout = parse_env_float("PI_AGENT_TIMEOUT_SECONDS", 300.0, min_value=1.0)
+        backend = PiAgentBackend(agent_server_url, timeout_seconds=backend_timeout)
+        tools_schema = CHIEF_TOOLS_SCHEMA
+        logger.info(f"Agent backend: pi, server={agent_server_url}, timeout={backend_timeout:.1f}s")
+    else:
+        raise RuntimeError(f"Unsupported AGENT_BACKEND {backend_mode!r}; expected 'pi' or 'airline'")
+
+    logger.info(f"Agent filler threshold: {THINKER_FILLER_THRESHOLD_SECONDS:.3f}s")
     for name, handler in build_handlers(
-        thinker,
+        backend,
         filler_threshold_seconds=THINKER_FILLER_THRESHOLD_SECONDS,
     ).items():
         cancel_on_interruption = name != "call_backend"
@@ -288,7 +311,7 @@ async def bot(runner_args: RunnerArguments) -> None:
             name,
             handler,
             cancel_on_interruption=cancel_on_interruption,
-            timeout_secs=THINKER_TOOL_TIMEOUT_SECONDS,
+            timeout_secs=backend_timeout,
         )
         logger.info(f"Registered Talker tool: {name}, cancel_on_interruption={cancel_on_interruption}")
 
@@ -356,8 +379,12 @@ async def bot(runner_args: RunnerArguments) -> None:
         )
 
     # --- Context + aggregators ---
-    messages = _build_context_messages(talker_prompt, system_prompt)
-    context = LLMContext(messages, tools=TOOLS_SCHEMA, tool_choice="auto")
+    messages = _build_context_messages(
+        talker_prompt,
+        system_prompt,
+        include_travel_context=backend_mode == "airline",
+    )
+    context = LLMContext(messages, tools=tools_schema, tool_choice="auto")
     preserve_prompt_messages = len(messages)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,

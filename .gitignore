@@ -44,10 +44,15 @@ audio_dumps/
 benchmarking_tools/scaling-perf/results_*/
 benchmarking_tools/scaling-perf/perf_suite_*/
 
-# Frontend
+# Frontend and Pi agent service
 client/node_modules/
 client/dist/
 client/.env
+pi-agent-service/node_modules/
+
+# Sandboxed Pi workspace and agent state
+workspace/
+pi-agent-data/
 
 # Booking-server SQLite runtime state
 data/

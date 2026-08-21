@@ -2,10 +2,16 @@
 
 ## No Reply After Sending a Message
 
-Check the voice-agent logs:
+Check the voice gateway and Pi service logs:
 
 ```bash
-docker compose logs --tail 200 voice-agent
+docker compose logs --tail 200 voice-agent pi-agent
+```
+
+Confirm the Pi service is healthy:
+
+```bash
+docker compose ps pi-agent
 ```
 
 If OpenRouter reports that the model is only available through the Batch API, remove `:batch` from the model ID in `services.local.yaml`.
@@ -13,8 +19,14 @@ If OpenRouter reports that the model is only available through the Batch API, re
 Confirm `OPENROUTER_API_KEY` is set in `.env`, then recreate the service:
 
 ```bash
-docker compose up -d --force-recreate voice-agent
+docker compose up -d --force-recreate voice-agent pi-agent
 ```
+
+## Pi Cannot Read or Modify Workspace Files
+
+Place only the files the assistant needs under `./workspace`. The default `CHIEF_PI_TOOLS` setting is read-only. Add `edit`, `write`, or `bash` only when you intentionally grant those capabilities.
+
+The container runs as a non-root user. If host-created workspace files deny access, update their ownership or permissions without making credentials or unrelated host files accessible.
 
 ## CUDA Execution Provider Is Unavailable
 

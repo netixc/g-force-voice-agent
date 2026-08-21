@@ -1,0 +1,14 @@
+{
+  "name": "g-force-pi-agent-service",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "check": "node --check src/server.mjs"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.2",
+    "typebox": "^1.0.64"
+  }
+}
